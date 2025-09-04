@@ -2,7 +2,7 @@
   "name": "Shots-On-Goal Tracker",
   "short_name": "SOG Tracker",
   "description": "Offline hockey shots-on-goal tracker",
-  "start_url": "./shots-on-goal-tracker.html",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#F6F8FB",
