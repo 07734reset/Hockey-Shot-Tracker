@@ -10,7 +10,7 @@
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Shots-On-Goal Tracker (Offline)</title>
+<title>Shots-On-Goal Tracker</title>
 <style>
   :root{
     --brand:#02529B; --brand2:#5272B3; --hl:#FFC526; --bg:#F6F8FB; --card:#fff; --muted:#EAF0FB;
@@ -76,7 +76,7 @@
     <div class="row mt8">
       <div class="col" style="max-width:160px">
         <label>Period length (minutes)</label>
-        <input id="periodLen" inputmode="numeric" pattern="[0-9]*" placeholder="e.g. 20" value="20"/>
+        <input id="periodLen" inputmode="numeric" pattern="[0-9]*" placeholder="e.g. 15" value="15"/>
       </div>
     </div>
     <div class="row mt8">
@@ -88,10 +88,10 @@
         </select>
       </div>
     </div>
-    <label class="row mt8" style="gap:8px;font-size:14px">
-      <input id="haptics" type="checkbox"/>
-      <span>Haptics (Android users only)</span>
-    </label>
+<div class="row mt8" style="align-items:center;gap:6px;font-size:14px">
+  <input id="haptics" type="checkbox" style="margin:0"/>
+  <label for="haptics" style="cursor:pointer">Haptics (Android users only)</label>
+</div>
     <button id="btnStartGame" class="btn btn-primary full mt12">Start Game</button>
     <div id="version" class="version"></div>
   </div>
@@ -163,20 +163,54 @@
   <div class="card">
     <button id="btnReset" class="btn btn-ghost full">Reset</button>
   </div>
+  <div id="versionBadge"
+     style="position:fixed;right:8px;bottom:4px;font-size:11px;color:#9ca3af;user-select:none;pointer-events:none;z-index:9999">
+</div>
 </div>
 
 <script>
 /* ---------------- Version: auto-increment on code changes ---------------- */
 (function(){
-  const SEMVER_BASE="v1.0.0";
-  function hashString(str){let h=5381;for(let i=0;i<str.length;i++) h=((h<<5)+h)+str.charCodeAt(i);return (h>>>0).toString(36);}
-  const scripts=[...document.scripts].map(s=>s===document.currentScript?null:s.textContent).filter(Boolean).join('\n');
-  const CODE_HASH=hashString(scripts);
-  const LS_BUILD_KEY="sogt_build_off"; const LS_HASH_KEY="sogt_code_hash_off";
-  let build=parseInt(localStorage.getItem(LS_BUILD_KEY)||"0",10)||0;
-  const prev=localStorage.getItem(LS_HASH_KEY);
-  if(prev!==CODE_HASH){ build+=1; localStorage.setItem(LS_BUILD_KEY,String(build)); localStorage.setItem(LS_HASH_KEY,CODE_HASH); }
-  document.getElementById('version').textContent = `${SEMVER_BASE} • build ${build}`;
+  const SEMVER_BASE = "v2.2.4";
+  function hashString(str){
+    let h = 5381;
+    for (let i = 0; i < str.length; i++) h = ((h << 5) + h) + str.charCodeAt(i);
+    return (h >>> 0).toString(36);
+  }
+
+  // ✅ Hash the current inline script (i.e., your app code)
+  // This guarantees the hash changes whenever you edit the file.
+  var CURRENT_SCRIPT = document.currentScript;
+  // If this block isn’t the last script, try to find the last inline one:
+  if (!CURRENT_SCRIPT) {
+    const scripts = Array.from(document.scripts).filter(s => s.src === "");
+    CURRENT_SCRIPT = scripts[scripts.length - 1] || null;
+  }
+  const CODE_TEXT = CURRENT_SCRIPT ? CURRENT_SCRIPT.textContent : "";
+  const CODE_HASH = hashString(CODE_TEXT);
+
+  const LS_BUILD_KEY = "sogt_build_off";
+  const LS_HASH_KEY  = "sogt_code_hash_off";
+
+  let build = parseInt(localStorage.getItem(LS_BUILD_KEY) || "0", 10) || 0;
+  const prev = localStorage.getItem(LS_HASH_KEY);
+
+  if (prev !== CODE_HASH) {
+    build += 1;
+    localStorage.setItem(LS_BUILD_KEY, String(build));
+    localStorage.setItem(LS_HASH_KEY, CODE_HASH);
+  }
+
+  // Expose a friendly version string and render badges if present
+  window.APP_VERSION = `${SEMVER_BASE} • build ${build}`;
+
+  // Start screen (small, absolute)
+  const v1 = document.getElementById('version');
+  if (v1) v1.textContent = window.APP_VERSION;
+
+  // Persistent bottom-right badge
+  const v2 = document.getElementById('versionBadge');
+  if (v2) v2.textContent = window.APP_VERSION;
 })();
 
 /* ---------------- Utilities ---------------- */
@@ -192,7 +226,7 @@ const secToMMSS = sec => {
 };
 
 /* ---------------- State ---------------- */
-let periodLenMin = 20;
+let periodLenMin = 15;
 let haptics = false;
 
 let gameStarted = false;
@@ -200,7 +234,7 @@ let period = 1;
 let team = "Home";
 let activeGoalie = "";
 let periodHasStarted = false;
-let shiftStartClock = "20:00";
+let shiftStartClock = "15:00";
 
 const shots = [];    // {team, goalie, period, result}
 const shifts = [];   // {team, goalie, period, timeOn, timeOff}
@@ -434,16 +468,39 @@ function nextPeriod(){
   if(period>=3) $btnPeriodOrEnd.textContent='End Game';
   renderStatus(); renderTally();
 }
+function closeOpenShiftAt(periodEndClock){
+  // If a goalie is active in the current period, close their segment to the specified clock.
+  if(periodHasStarted && activeGoalie){
+    const seg = {
+      team,
+      goalie: String(activeGoalie),
+      period,
+      timeOn: shiftStartClock,       // when this goalie came on (countdown clock)
+      timeOff: periodEndClock || "00:00" // where we’re closing to
+    };
+    shifts.push(seg);
+    return seg; // return what we added so Undo can remove it cleanly if needed
+  }
+  return null;
+}
 
 function endGame(){
   if(!confirm("End the game and close the final shift at 00:00?")) return;
-  let closed=null;
-  if(periodHasStarted && activeGoalie){
-    closed = {team, goalie:String(activeGoalie), period, timeOn:shiftStartClock, timeOff:"00:00"};
-    shifts.push(closed);
-  }
+
+  // Always close any open shift to 00:00 so the last segment counts
+  const closed = closeOpenShiftAt("00:00");
+
   actions.push({type:'endGame', payload:{closed}});
+
+  renderTally(); // reflect the added ice time immediately
+
   alert("Game Ended. Please take this phone to the team manager and don't hit Reset or refresh the page. Thanks for helping!");
+  gameEnded = true;
+  setShotButtonsEnabled(false);
+  $btnPeriodOrEnd.disabled = true;
+  $toggleSwitch.disabled = true;
+  $btnConfirmSwitch.disabled = true;
+  $btnUndo.disabled = true;
 }
 
 function undo(){
@@ -463,7 +520,6 @@ function undo(){
     activeGoalie = last.payload.prevGoalie;
     shiftStartClock = last.payload.prevShiftStart;
     periodHasStarted = last.payload.prevPeriodHasStarted;
-    // UI
     if(!periodHasStarted) $periodSetup.classList.remove('hidden');
     setShotButtonsEnabled(!!periodHasStarted);
     $btnPeriodOrEnd.textContent = (period>=3 ? 'End Game' : 'Next Period');
@@ -471,15 +527,12 @@ function undo(){
     activeGoalie = '';
     shiftStartClock = `${periodLenMin}:${pad(0)}`;
     periodHasStarted = false;
-    // show setup again and restore input for user convenience
     $periodSetup.classList.remove('hidden');
     $startGoalie.value = last.payload.goalie;
     setShotButtonsEnabled(false);
   } else if(last.type==='endGame'){
-    if(last.payload.closed) shifts.pop();
-    // nothing else to toggle visually; game remains in running state
-  } else if(last.type==='startGame'){
-    // unlikely to be the only action, but keep for completeness
+    // Remove the auto-closed segment we just added, if any
+    if(last.payload && last.payload.closed) shifts.pop();
   }
   actions.pop();
   renderStatus(); renderTally();
@@ -492,6 +545,12 @@ function resetAll(){
   gameStarted=false; period=1; team='Home'; activeGoalie=''; periodHasStarted=false; shiftStartClock="20:00";
   shots.length=0; shifts.length=0; seeded.length=0; actions.length=0;
 
+  gameEnded = false;
+  $btnPeriodOrEnd.disabled = false;
+  $toggleSwitch.disabled = false;
+  $btnConfirmSwitch.disabled = false;
+  $btnUndo.disabled = false;
+  
   // UI
   $periodLen.value='20';
   $initialTeam.value='Home';
@@ -526,13 +585,19 @@ $periodLen.addEventListener('input', (e)=>{
 
 /* ---------------- Initial render ---------------- */
 renderStatus(); renderTally();
+  
+document.getElementById('versionBadge').textContent =`${SEMVER_BASE} • build ${build}`;
 </script>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('service-worker.js', { scope: './' }).catch(console.error);
+    // Use your existing global APP_BUILD from the version badge logic
+    const v = (window.APP_BUILD != null) ? String(window.APP_BUILD) : 'dev';
+    navigator.serviceWorker.register(`service-worker.js?v=${encodeURIComponent(v)}`, { scope: './' })
+      .catch(console.error);
   });
 }
 </script>
+
 </body>
 </html>
