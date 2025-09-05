@@ -53,39 +53,21 @@
     position:fixed;right:8px;bottom:6px;font-size:11px;color:#9ca3af;
     user-select:none;pointer-events:none;z-index:9999
   }
-
   /* Help modal */
-/* Help modal */
-.modal-backdrop{
-  position:fixed;inset:0;background:rgba(0,0,0,.45);
-  display:flex;align-items:center;justify-content:center;z-index:10000;
-  padding:16px; /* small gutter on small phones */
-}
-.modal{
-  background:#fff;border-radius:16px;max-width:700px;width:100%;
-  max-height:85vh; /* give room for OS bars */
-  overflow:hidden; /* let inner sections manage scrolling */
-  box-shadow:0 10px 40px rgba(0,0,0,.25);
-  display:flex;flex-direction:column; /* enables sticky header/footer */
-}
-.modal header{
-  position:sticky;top:0;z-index:1;
-  padding:14px 16px;border-bottom:1px solid #eef2f7;
-  display:flex;justify-content:space-between;align-items:center;
-  background:#fff; /* required for sticky to overlay content */
-}
-.modal header h3{margin:0;font-size:18px;color:var(--brand)}
-.modal .content{
-  padding:14px 16px;
-  overflow:auto; /* scroll only the body */
-  -webkit-overflow-scrolling:touch; /* momentum on iOS */
-}
-.modal footer{
-  position:sticky;bottom:0;z-index:1;
-  padding:12px 16px;border-top:1px solid #eef2f7;
-  display:flex;justify-content:flex-end;gap:8px;
-  background:#fff;
-}
+  .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);
+    display:flex;align-items:center;justify-content:center;z-index:10000;padding:16px;}
+  .modal{background:#fff;border-radius:16px;max-width:700px;width:100%;
+    max-height:85vh;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.25);
+    display:flex;flex-direction:column;}
+  .modal header{position:sticky;top:0;z-index:1;
+    padding:14px 16px;border-bottom:1px solid #eef2f7;
+    display:flex;justify-content:space-between;align-items:center;
+    background:#fff;}
+  .modal header h3{margin:0;font-size:18px;color:var(--brand)}
+  .modal .content{padding:14px 16px;overflow:auto;-webkit-overflow-scrolling:touch;}
+  .modal footer{position:sticky;bottom:0;z-index:1;
+    padding:12px 16px;border-top:1px solid #eef2f7;
+    display:flex;justify-content:flex-end;gap:8px;background:#fff;}
 </style>
 </head>
 <body>
@@ -191,7 +173,7 @@
       <button id="btnUndo" class="btn btn-ghost" style="width:100%">Undo</button>
     </div>
 
-    <!-- Reset + Help (same row) -->
+    <!-- Reset + Help -->
     <div class="card">
       <div class="row-split">
         <button id="btnReset" class="btn btn-ghost">Reset</button>
@@ -204,80 +186,39 @@
 <!-- Version badge -->
 <div id="versionBadge"></div>
 
-<!-- Help Modal (hidden by default) -->
-<!-- Help Modal (hidden by default) -->
+<!-- Help Modal -->
 <div id="helpBackdrop" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
   <div class="modal" role="document">
     <header>
       <h3 id="helpTitle">How to use this app</h3>
       <button id="helpCloseX" class="btn btn-ghost" aria-label="Close">✕</button>
     </header>
-
-    <!-- 💬 Help content (scrolls) -->
     <div class="content" style="line-height:1.55">
       <p><b>OK! So this is the first app I’ve ever made, so I’m making my excuses early 😅</b><br>
       (And I’m not going to pretend that ChatGPT didn’t do most of the work!)</p>
-
-      <h4 style="margin-top:12px;color:#02529B">For the Shot Watcher (there are 2 per game)</h4>
+      <h4 style="margin-top:12px;color:#02529B">For the Shot Watcher</h4>
       <ol style="margin:0;padding-left:18px">
-        <li>Pick the <b>duration of the periods</b> (this changes by age group).</li>
-        <li>Pick which <b>team is in the goal</b> you’re watching at the start of the game.</li>
+        <li>Pick the <b>period duration</b>.</li>
+        <li>Pick which <b>team is in the goal</b> you’re watching.</li>
         <li>Tap <b>Start Game</b>.</li>
-        <li>Enter the <b>shirt number of the first goalie</b> and tap <b>Start Period</b>.</li>
-        <li>Start tracking shots and goals using the <b>Save</b> / <b>Goal</b> buttons.<br>
-            (You’ll see the live tally update above.)</li>
-        <li>If the team <b>switches goalies</b>:
-          <ol type="a" style="margin:4px 0 8px 20px;padding-left:16px">
-            <li>Tap <b>Switch Goalie</b></li>
-            <li>Enter the new goalie’s shirt number</li>
-            <li>Enter the <b>game clock time</b> (as shown on the scoreboard)</li>
-            <li>Tap <b>Confirm Switch</b></li>
-          </ol>
-        </li>
-        <li>Repeat steps 5 & 6 until the period ends.</li>
-        <li>At the end of the period, tap <b>Next Period</b>.<br>
-            (The app automatically switches between Home and Away, since teams change ends.)</li>
-        <li>Repeat until you finish the 3rd period, then tap <b>End Game</b>.</li>
-        <li><b>Do NOT press Reset</b> after the game 🙂</li>
-        <li>Take your phone to the person filling in the gamesheet and show them the data.</li>
-        <li>Relish the knowledge that you’ve helped the game happen. Well done you! 🎉</li>
+        <li>Enter the <b>goalie #</b> and tap <b>Start Period</b>.</li>
+        <li>Use <b>Save</b>/<b>Goal</b> buttons to track shots.</li>
+        <li>If goalie switches: tap <b>Switch Goalie</b>, enter new # and game clock time, then confirm.</li>
+        <li>Repeat until period ends → tap <b>Next Period</b>.</li>
+        <li>After P3 tap <b>End Game</b>.</li>
+        <li><b>Don’t press Reset!</b></li>
+        <li>Show the tally to the gamesheet keeper ✅</li>
       </ol>
-
-      <h4 style="margin-top:18px;color:#02529B">For the Gamesheet Filler</h4>
-      <p>This app tracks:</p>
-      <ul style="margin:0 0 10px 18px;padding-left:0">
-        <li><b>Shots on Goal</b> (S) — every shot on target</li>
-        <li><b>Goals</b> (G) — how many went in</li>
-        <li><b>Total Ice Time</b> for each goalie</li>
-      </ul>
-
-      <p>The gamesheet only requires the <b>shots on goal per goalie</b> (not goals).
-      For each goalie, just record the highest “Shots” number in each period column.</p>
-
-      <p><u>Example:</u></p>
-      <pre style="background:#f3f4f6;padding:8px;border-radius:6px;font-size:13px;overflow:auto">
-Team   Goalie   P1    P2    P3    Total
-Home   #66      6/2   0/0   9/3   30:00
-      </pre>
-      <p>This means goalie #66 faced <b>6 shots</b> in P1 (2 goals against) and <b>9 shots</b> in P3 (3 goals against).</p>
-
-      <p>⚠️ Remember: teams swap ends each period, so you’ll need to combine the data from both Shot Watchers’ phones to complete the sheet correctly.</p>
-
-      <p>Finally, add up each goalie’s <b>Total Ice Time</b> and you’re done ✅</p>
-
-      <p style="margin-top:16px;font-size:13px;color:#6b7280">— Nathan</p>
     </div>
-
-    <footer>
-      <button id="helpClose" class="btn btn-primary">Close</button>
-    </footer>
+    <footer><button id="helpClose" class="btn btn-primary">Close</button></footer>
   </div>
 </div>
+
 
 <script>
 /* ---------- Version auto-increment ---------- */
 (function(){
-  const SEMVER_BASE="v1.0.0";
+  const SEMVER_BASE="v2.2.4";
   function hashString(str){let h=5381;for(let i=0;i<str.length;i++)h=((h<<5)+h)+str.charCodeAt(i);return(h>>>0).toString(36);}
   var CURRENT_SCRIPT=document.currentScript;
   if(!CURRENT_SCRIPT){const scripts=Array.from(document.scripts).filter(s=>s.src==="");CURRENT_SCRIPT=scripts[scripts.length-1]||null;}
