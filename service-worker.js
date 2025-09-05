@@ -5,12 +5,12 @@ const CACHE_VERSION = `sogt-v${BUILD}`;
 
 const PRECACHE = [
   './',
-  './hockey-tracker-offline.html',
+  './index.html',
   './manifest.webmanifest',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-512-maskable.png',
-  './Hounds Logo - no back.avif' // optional; SW skips if missing
+  './Hounds Logo - no back.avif' // optional; SW will skip if missing
 ];
 
 // Install: pre-cache core assets
@@ -22,7 +22,7 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Activate: remove old caches
+// Activate: clean up old caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then(keys =>
@@ -31,7 +31,7 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch: same-origin cache-first, then network; runtime cache misses
+// Fetch: same-origin cache-first, then network; runtime cache new responses
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (new URL(req.url).origin !== self.location.origin) return;
