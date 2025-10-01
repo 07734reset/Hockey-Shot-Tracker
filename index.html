@@ -1,542 +1,904 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Shots-On-Goal Tracker</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Shots-On-Goal Tracker</title>
 
-<!-- PWA hooks -->
-<link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#02529B">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="apple-touch-icon" href="icons/icon-192.png"/>
+    <!-- PWA hooks -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#02529B" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="apple-touch-icon" href="icons/icon-192.png" />
 
-<style>
-  :root{
-    --brand:#02529B; --brand2:#5272B3; --hl:#FFC526;
-    --bg:#F6F8FB; --card:#fff; --muted:#EAF0FB; --text:#111827; --mutedText:#6b7280; --onbrand:#fff;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,'Helvetica Neue',Arial,sans-serif;background:var(--bg);color:var(--text)}
-  .container{max-width:720px;margin:0 auto;padding:16px;display:flex;flex-direction:column;gap:16px}
-  .card{background:var(--card);border-radius:18px;box-shadow:0 6px 24px rgba(2,82,155,.08);padding:16px}
-  h1{margin:0;text-align:center;color:var(--brand);font-size:20px;font-weight:800}
-  .status{display:flex;gap:8px;margin-top:8px}
-  .chip{background:var(--muted);border-radius:12px;padding:8px 10px;min-width:0;flex:1}
-  .chip .lab{font-size:11px;color:var(--mutedText);line-height:1}
-  .chip .val{font-weight:800;color:var(--brand);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  label{font-size:12px;color:var(--mutedText);display:block;margin-bottom:4px}
-  input,select,button{font-size:16px}
-  input,select{width:100%;padding:10px;border:1px solid #d1d5db;border-radius:10px}
-  .btn{border:none;border-radius:16px;padding:12px 14px;font-weight:700;cursor:pointer}
-  .btn:disabled{background:#d1d5db;color:#6b7280;cursor:not-allowed}
-  .btn-primary{background:var(--brand);color:var(--onbrand)}
-  .btn-secondary{background:var(--brand2);color:var(--onbrand)}
-  .btn-ghost{background:#eef2f7}
-  .btn-hl{background:var(--hl);color:#111}
-  #btnSave,#btnGoal{min-height:120px;font-size:22px}
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-  .row-split{display:flex;gap:12px}
-  .row-split > *{flex:1}
-  .col{flex:1;min-width:0}
-  .center{text-align:center}
-  .hidden{display:none !important}
-  table{width:100%;border-collapse:separate;border-spacing:0}
-  thead th{background:var(--muted);font-weight:700;text-align:left;padding:8px 6px;font-size:13px}
-  tbody td{padding:8px 6px;font-size:14px}
-  tbody tr:nth-child(even){background:#f9fafb}
-  .logo-wrap{display:flex;justify-content:center;margin-top:4px;margin-bottom:8px}
-  .logo{max-height:90px;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,.08))}
-  #versionBadge{
-    position:fixed;right:8px;bottom:6px;font-size:11px;color:#9ca3af;
-    user-select:none;pointer-events:none;z-index:9999
-  }
-  /* Help modal */
-  .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);
-    display:flex;align-items:center;justify-content:center;z-index:10000;padding:16px;}
-  .modal{background:#fff;border-radius:16px;max-width:700px;width:100%;
-    max-height:85vh;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.25);
-    display:flex;flex-direction:column;}
-  .modal header{position:sticky;top:0;z-index:1;
-    padding:14px 16px;border-bottom:1px solid #eef2f7;
-    display:flex;justify-content:space-between;align-items:center;
-    background:#fff;}
-  .modal header h3{margin:0;font-size:18px;color:var(--brand)}
-  .modal .content{padding:14px 16px;overflow:auto;-webkit-overflow-scrolling:touch;}
-  .modal footer{position:sticky;bottom:0;z-index:1;
-    padding:12px 16px;border-top:1px solid #eef2f7;
-    display:flex;justify-content:flex-end;gap:8px;background:#fff;}
-</style>
-</head>
-<body>
-<div class="container">
-  <!-- Header -->
-  <div class="card">
-    <h1>Shots-On-Goal Tracker</h1>
-    <div id="status" class="status hidden">
-      <div class="chip"><div class="lab">Current Period</div><div class="val" id="stPeriod">P1</div></div>
-      <div class="chip"><div class="lab">Current Team</div><div class="val" id="stTeam">Home</div></div>
-      <div class="chip"><div class="lab">Current Goalie #</div><div class="val" id="stGoalie">—</div></div>
-    </div>
-  </div>
+    <style>
+      :root {
+        --brand: #02529b;
+        --brand2: #5272b3;
+        --hl: #ffc526;
+        --bg: #f6f8fb;
+        --card: #fff;
+        --muted: #eaf0fb;
+        --text: #111827;
+        --mutedText: #6b7280;
+        --onbrand: #fff;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family:
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          Ubuntu,
+          Cantarell,
+          "Helvetica Neue",
+          Arial,
+          sans-serif;
+        background: var(--bg);
+        color: var(--text);
+      }
+      .container {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .card {
+        background: var(--card);
+        border-radius: 18px;
+        box-shadow: 0 6px 24px rgba(2, 82, 155, 0.08);
+        padding: 16px;
+      }
+      h1 {
+        margin: 0;
+        text-align: center;
+        color: var(--brand);
+        font-size: 20px;
+        font-weight: 800;
+      }
+      .status {
+        display: flex;
+        gap: 8px;
+        margin-top: 8px;
+      }
+      .chip {
+        background: var(--muted);
+        border-radius: 12px;
+        padding: 8px 10px;
+        min-width: 0;
+        flex: 1;
+      }
+      .chip .lab {
+        font-size: 11px;
+        color: var(--mutedText);
+        line-height: 1;
+      }
+      .chip .val {
+        font-weight: 800;
+        color: var(--brand);
+        line-height: 1.2;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      label {
+        font-size: 12px;
+        color: var(--mutedText);
+        display: block;
+        margin-bottom: 4px;
+      }
+      input,
+      select,
+      button {
+        font-size: 16px;
+      }
+      input,
+      select {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #d1d5db;
+        border-radius: 10px;
+      }
+      .btn {
+        border: none;
+        border-radius: 16px;
+        padding: 12px 14px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .btn:disabled {
+        background: #d1d5db;
+        color: #6b7280;
+        cursor: not-allowed;
+      }
+      .btn-primary {
+        background: var(--brand);
+        color: var(--onbrand);
+      }
+      .btn-secondary {
+        background: var(--brand2);
+        color: var(--onbrand);
+      }
+      .btn-ghost {
+        background: #eef2f7;
+      }
+      .btn-hl {
+        background: var(--hl);
+        color: #111;
+      }
+      #btnSave,
+      #btnGoal {
+        min-height: 120px;
+        font-size: 22px;
+      }
+      .grid2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .col {
+        flex: 1;
+        min-width: 0;
+      }
+      .center {
+        text-align: center;
+      }
+      .hidden {
+        display: none !important;
+      }
+      table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+      }
+      thead th {
+        background: var(--muted);
+        font-weight: 700;
+        text-align: left;
+        padding: 8px 6px;
+        font-size: 13px;
+      }
+      tbody td {
+        padding: 8px 6px;
+        font-size: 14px;
+      }
+      tbody tr:nth-child(even) {
+        background: #f9fafb;
+      }
+      .logo-wrap {
+        display: flex;
+        justify-content: center;
+        margin-top: 4px;
+        margin-bottom: 8px;
+      }
+      .logo {
+        max-height: 90px;
+        object-fit: contain;
+        filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.08));
+      }
+      #versionBadge {
+        position: fixed;
+        right: 8px;
+        bottom: 6px;
+        font-size: 11px;
+        color: #9ca3af;
+        user-select: none;
+        pointer-events: none;
+        z-index: 9999;
+      }
+      /* Emphasize total shots; de-emphasize goals */
+      .shotsCell {
+        display: inline-flex;
+        align-items: baseline;
+        gap: 8px;
+        justify-content: center;
+        width: 100%;
+      }
+      .shotsNum {
+        font-weight: 800;
+        font-size: 18px;
+        color: var(--brand);
+      }
+      .goalsNum {
+        font-size: 12px;
+        color: #8a8f99;
+        background: #f3f4f6;
+        padding: 2px 6px;
+        border-radius: 999px;
+      }
 
-  <!-- START SCREEN -->
-  <div id="startCard" class="card" style="position:relative;padding-bottom:36px">
-    <div class="logo-wrap">
-      <img src="Hounds Logo - no back.avif" alt="Team Logo" class="logo" onerror="this.style.display='none'"/>
-    </div>
-    <div class="row" style="align-items:flex-end">
-      <div class="col" style="max-width:160px">
-        <label>Period length (minutes)</label>
-        <input id="periodLen" inputmode="numeric" pattern="[0-9]*" placeholder="e.g. 15" value="15"/>
-      </div>
-      <div class="col" style="max-width:220px">
-        <label>Team in Goal for Period 1</label>
-        <select id="initialTeam">
-          <option>Home</option>
-          <option>Away</option>
-        </select>
-      </div>
-    </div>
-    <div class="row" style="align-items:center;gap:6px;font-size:14px;margin-top:8px">
-      <input id="haptics" type="checkbox" style="margin:0"/>
-      <label for="haptics" style="cursor:pointer;margin:0">Haptics (Android users only)</label>
-    </div>
-    <button id="btnStartGame" class="btn btn-primary" style="width:100%;margin-top:12px">Start Game</button>
-    <div id="version" style="position:absolute;right:12px;bottom:8px;color:#9ca3af;font-size:11px;user-select:none"></div>
-  </div>
-
-  <!-- APP MAIN (hidden until Start Game) -->
-  <div id="appMain" class="hidden">
-    <!-- Start-of-period setup -->
-    <div id="periodSetup" class="card hidden">
-      <div>
-        <label>Goalie # Starting Period</label>
-        <input id="startGoalie" placeholder="e.g. 31"/>
-      </div>
-      <button id="btnStartPeriod" class="btn btn-secondary" style="width:100%;margin-top:12px">Start Period</button>
-    </div>
-
-    <!-- Live Tally -->
-    <div class="card">
-      <div style="font-weight:700;color:var(--brand);margin-bottom:6px">Live Tally</div>
-      <div style="overflow:auto">
-        <table>
-          <thead>
-            <tr>
-              <th>Team</th>
-              <th>Goalie #</th>
-              <th class="center">P1 (S/G)</th>
-              <th class="center">P2 (S/G)</th>
-              <th class="center">P3 (S/G)</th>
-              <th class="center">Total Ice</th>
-            </tr>
-          </thead>
-          <tbody id="tallyBody">
-            <tr id="noDataRow"><td colspan="6" style="color:#6b7280;padding:14px 6px">No data yet</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Shot buttons -->
-    <div class="card">
-      <div class="grid2">
-        <button id="btnSave" class="btn btn-primary" disabled>Save</button>
-        <button id="btnGoal" class="btn btn-hl" disabled>Goal</button>
-      </div>
-    </div>
-
-    <!-- Switch Goalie + Next/End -->
-    <div class="card">
-      <button id="toggleSwitch" class="btn btn-secondary" style="width:100%" disabled>Switch Goalie</button>
-      <div id="switchPanel" class="hidden" style="margin-top:12px">
-        <div class="row">
-          <div class="col">
-            <label>New goalie #</label>
-            <input id="newGoalie"/>
+      /* Current counters strip */
+      .currentCounters {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        justify-content: space-between;
+        background: var(--muted);
+        padding: 10px 12px;
+        border-radius: 12px;
+        margin-bottom: 8px;
+      }
+      .currentCounters .lab {
+        font-size: 12px;
+        color: var(--mutedText);
+      }
+      .currentCounters .val {
+        font-size: 20px;
+        font-weight: 800;
+        color: var(--brand);
+      }
+      .currentCounters .goals {
+        font-size: 14px;
+        font-weight: 700;
+        color: #8a8f99;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header -->
+      <div class="card">
+        <h1>Shots-On-Goal Tracker</h1>
+        <div id="status" class="status hidden">
+          <div class="chip">
+            <div class="lab">Current Period</div>
+            <div class="val" id="stPeriod">P1</div>
           </div>
-          <div class="col">
-            <label>Game Clock Time (MM:SS)</label>
-            <input id="switchClock" placeholder="14:23"/>
+          <div class="chip">
+            <div class="lab">Current Team</div>
+            <div class="val" id="stTeam">Home</div>
+          </div>
+          <div class="chip">
+            <div class="lab">Current Goalie #</div>
+            <div class="val" id="stGoalie">—</div>
           </div>
         </div>
-        <button id="btnConfirmSwitch" class="btn btn-primary" style="width:100%;margin-top:12px" disabled>Confirm Switch</button>
       </div>
-      <button id="btnPeriodOrEnd" class="btn btn-secondary" style="width:100%;margin-top:12px" disabled>Next Period</button>
-    </div>
 
-    <!-- Undo -->
-    <div class="card">
-      <button id="btnUndo" class="btn btn-ghost" style="width:100%">Undo</button>
-    </div>
+      <!-- START SCREEN -->
+      <div id="startCard" class="card" style="position: relative; padding-bottom: 36px">
+        <div class="logo-wrap">
+          <img src="Hounds Logo - no back.avif" alt="Team Logo" class="logo" onerror="this.style.display='none'" />
+        </div>
+        <div class="row" style="align-items: flex-end">
+          <div class="col" style="max-width: 160px">
+            <label>Period length (min)</label>
+            <input id="periodLen" inputmode="numeric" pattern="[0-9]*" placeholder="e.g. 20" value="20" />
+          </div>
+          <div class="col" style="max-width: 220px">
+            <label>Team in Goal for Period 1</label>
+            <select id="initialTeam">
+              <option>Home</option>
+              <option>Away</option>
+            </select>
+          </div>
+        </div>
+        <div class="row" style="align-items: center; gap: 6px; font-size: 14px; margin-top: 8px">
+          <input id="haptics" type="checkbox" style="margin: 0" />
+          <label for="haptics" style="cursor: pointer; margin: 0">Haptics (Android users only)</label>
+        </div>
+        <button id="btnStartGame" class="btn btn-primary" style="width: 100%; margin-top: 12px">Start Game</button>
+        <div
+          id="version"
+          style="
+            position: absolute;
+            right: 12px;
+            bottom: 8px;
+            color: #9ca3af;
+            font-size: 11px;
+            user-select: none;
+          "></div>
+      </div>
 
-    <!-- Reset + Help -->
-    <div class="card">
-      <div class="row-split">
-        <button id="btnReset" class="btn btn-ghost">Reset</button>
-        <button id="btnHelp" class="btn btn-ghost">Help</button>
+      <!-- APP MAIN (hidden until Start Game) -->
+      <div id="appMain" class="hidden">
+        <!-- Start-of-period setup -->
+        <div id="periodSetup" class="card hidden">
+          <div>
+            <label>Goalie # Starting Period</label>
+            <input id="startGoalie" placeholder="e.g. 31" />
+          </div>
+          <button id="btnStartPeriod" class="btn btn-secondary" style="width: 100%; margin-top: 12px">
+            Start Period
+          </button>
+        </div>
+
+        <!-- Live Tally -->
+        <div class="card">
+          <div style="font-weight: 700; color: var(--brand); margin-bottom: 6px">Live Tally</div>
+          <div style="overflow: auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>Team</th>
+                  <th>Goalie #</th>
+                  <th class="center">
+                    P1 Shots <span style="font-weight: 400; color: #6b7280; font-size: 11px">(goals)</span>
+                  </th>
+                  <th class="center">
+                    P2 Shots <span style="font-weight: 400; color: #6b7280; font-size: 11px">(goals)</span>
+                  </th>
+                  <th class="center">
+                    P3 Shots <span style="font-weight: 400; color: #6b7280; font-size: 11px">(goals)</span>
+                  </th>
+                  <th class="center">Total Ice</th>
+                </tr>
+              </thead>
+              <tbody id="tallyBody">
+                <tr id="noDataRow">
+                  <td colspan="6" style="color: #6b7280; padding: 14px 6px">No data yet</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <!-- Recording guide -->
+        <div class="card" style="padding: 10px">
+          <div style="font-size: 13px; color: #6b7280">
+            <b>How to record:</b> tap <span style="color: var(--brand); font-weight: 700">Save</span> for a saved shot
+            and <span style="color: #111; background: var(--hl); padding: 0 6px; border-radius: 999px">Goal</span> when
+            it goes in. The big number is <b>total shots</b>; goals appear smaller next to it.
+          </div>
+        </div>
+        <!-- Shot buttons -->
+        <div class="card">
+          <div class="currentCounters">
+            <div>
+              <div class="lab">This Period — Total Shots</div>
+              <div class="val" id="currShots">0</div>
+            </div>
+            <div>
+              <div class="lab">Goals</div>
+              <div class="goals" id="currGoals">0</div>
+            </div>
+          </div>
+          <div class="grid2">
+            <button id="btnSave" class="btn btn-primary" disabled>Save</button>
+            <button id="btnGoal" class="btn btn-hl" disabled>Goal</button>
+          </div>
+        </div>
+
+        <!-- Switch Goalie + Next/End -->
+        <div class="card">
+          <button id="toggleSwitch" class="btn btn-secondary" style="width: 100%">Switch Goalie</button>
+          <div id="switchPanel" class="hidden" style="margin-top: 12px">
+            <div class="row">
+              <div class="col">
+                <label>New goalie #</label>
+                <input id="newGoalie" />
+              </div>
+              <div class="col">
+                <label>Game Clock Time (MM:SS)</label>
+                <input id="switchClock" placeholder="14:23" />
+              </div>
+            </div>
+            <button id="btnConfirmSwitch" class="btn btn-primary" style="width: 100%; margin-top: 12px">
+              Confirm Switch
+            </button>
+          </div>
+          <button id="btnPeriodOrEnd" class="btn btn-secondary" style="width: 100%; margin-top: 12px">
+            Next Period
+          </button>
+        </div>
+
+        <!-- Undo -->
+        <div class="card">
+          <button id="btnUndo" class="btn btn-ghost" style="width: 100%">Undo</button>
+        </div>
+
+        <!-- Reset -->
+        <div class="card">
+          <button id="btnReset" class="btn btn-ghost" style="width: 100%">Reset</button>
+        </div>
       </div>
     </div>
-  </div>
-</div>
 
-<!-- Version badge -->
-<div id="versionBadge"></div>
+    <!-- Version badge -->
+    <div id="versionBadge"></div>
 
-<!-- Help Modal -->
-<div id="helpBackdrop" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
-  <div class="modal" role="document">
-    <header>
-      <h3 id="helpTitle">How to use this app</h3>
-      <button id="helpCloseX" class="btn btn-ghost" aria-label="Close">✕</button>
-    </header>
-    <div class="content" style="line-height:1.55">
-      <p><b>OK! So this is the first app I’ve ever made, so I’m making my excuses early 😅</b><br>
-      (And I’m not going to pretend that ChatGPT didn’t do most of the work!)</p>
-      <h4 style="margin-top:12px;color:#02529B">For the Shot Watcher</h4>
-      <ol style="margin:0;padding-left:18px">
-        <li>Pick the <b>period duration</b>.</li>
-        <li>Pick which <b>team is in the goal</b> you’re watching.</li>
-        <li>Tap <b>Start Game</b>.</li>
-        <li>Enter the <b>goalie #</b> and tap <b>Start Period</b>.</li>
-        <li>Use <b>Save</b>/<b>Goal</b> buttons to track shots.</li>
-        <li>If goalie switches: tap <b>Switch Goalie</b>, enter new # and game clock time, then confirm.</li>
-        <li>Repeat until period ends → tap <b>Next Period</b>.</li>
-        <li>After P3 tap <b>End Game</b>.</li>
-        <li><b>Don’t press Reset!</b></li>
-        <li>Show the tally to the gamesheet keeper ✅</li>
-      </ol>
-    </div>
-    <footer><button id="helpClose" class="btn btn-primary">Close</button></footer>
-  </div>
-</div>
+    <script>
+      /* ---------- Version: auto-increment when code changes ---------- */
+      (function () {
+        const SEMVER_BASE = "v1.0.0";
+        function hashString(str) {
+          let h = 5381;
+          for (let i = 0; i < str.length; i++) h = (h << 5) + h + str.charCodeAt(i);
+          return (h >>> 0).toString(36);
+        }
+        var CURRENT_SCRIPT = document.currentScript;
+        if (!CURRENT_SCRIPT) {
+          const scripts = Array.from(document.scripts).filter((s) => s.src === "");
+          CURRENT_SCRIPT = scripts[scripts.length - 1] || null;
+        }
+        const CODE_TEXT = CURRENT_SCRIPT ? CURRENT_SCRIPT.textContent : "";
+        const CODE_HASH = hashString(CODE_TEXT);
+        const LS_BUILD_KEY = "sogt_build_off",
+          LS_HASH_KEY = "sogt_code_hash_off";
+        let build = parseInt(localStorage.getItem(LS_BUILD_KEY) || "0", 10) || 0;
+        const prev = localStorage.getItem(LS_HASH_KEY);
+        if (prev !== CODE_HASH) {
+          build += 1;
+          localStorage.setItem(LS_BUILD_KEY, String(build));
+          localStorage.setItem(LS_HASH_KEY, CODE_HASH);
+        }
+        window.APP_BUILD = build;
+        window.APP_VERSION = `${SEMVER_BASE} • build ${build}`;
+        const v1 = document.getElementById("version");
+        if (v1) v1.textContent = window.APP_VERSION;
+        const v2 = document.getElementById("versionBadge");
+        if (v2) v2.textContent = window.APP_VERSION;
+      })();
 
+      /* ---------- Utils ---------- */
+      const pad = (n) => (n < 10 ? `0${n}` : `${n}`);
+      const mmssToSec = (mmss) => {
+        const [m, s] = String(mmss || "0:00")
+          .split(":")
+          .map((x) => parseInt(x || 0, 10));
+        if (isNaN(m) || isNaN(s)) return 0;
+        return Math.max(0, m * 60 + s);
+      };
+      const secToMMSS = (sec) => {
+        const s = Math.max(0, Math.floor(sec));
+        const m = Math.floor(s / 60);
+        const r = s % 60;
+        return `${m}:${pad(r)}`;
+      };
+      const validMMSS = (str) => /^\d{1,2}:\d{2}$/.test(String(str || ""));
+      function withinPeriod(str) {
+        const s = mmssToSec(str);
+        return s >= 0 && s <= periodLenMin * 60;
+      }
 
-<script>
-/* ---------- Version auto-increment ---------- */
-(function(){
-  const SEMVER_BASE="v2.2.4";
-  function hashString(str){let h=5381;for(let i=0;i<str.length;i++)h=((h<<5)+h)+str.charCodeAt(i);return(h>>>0).toString(36);}
-  var CURRENT_SCRIPT=document.currentScript;
-  if(!CURRENT_SCRIPT){const scripts=Array.from(document.scripts).filter(s=>s.src==="");CURRENT_SCRIPT=scripts[scripts.length-1]||null;}
-  const CODE_TEXT=CURRENT_SCRIPT?CURRENT_SCRIPT.textContent:""; const CODE_HASH=hashString(CODE_TEXT);
-  const LS_BUILD_KEY="sogt_build_off",LS_HASH_KEY="sogt_code_hash_off";
-  let build=parseInt(localStorage.getItem(LS_BUILD_KEY)||"0",10)||0;
-  const prev=localStorage.getItem(LS_HASH_KEY);
-  if(prev!==CODE_HASH){build+=1;localStorage.setItem(LS_BUILD_KEY,String(build));localStorage.setItem(LS_HASH_KEY,CODE_HASH);}
-  window.APP_BUILD=build;window.APP_VERSION=`${SEMVER_BASE} • build ${build}`;
-  document.getElementById('version').textContent=window.APP_VERSION;
-  document.getElementById('versionBadge').textContent=window.APP_VERSION;
-})();
+      /* ---------- State ---------- */
+      let periodLenMin = 20,
+        haptics = false;
+      let gameStarted = false,
+        gameEnded = false;
+      let period = 1,
+        team = "Home",
+        activeGoalie = "",
+        periodHasStarted = false,
+        shiftStartClock = "20:00";
+      const shots = [],
+        shifts = [],
+        seeded = [],
+        actions = [];
 
-/* ---------- Utils ---------- */
-const pad=n=>(n<10?`0${n}`:`${n}`);
-const mmssToSec=mmss=>{const [m,s]=(String(mmss||"0:00").split(":")).map(x=>parseInt(x||0,10));if(isNaN(m)||isNaN(s))return 0;return Math.max(0,m*60+s);}
-const secToMMSS=sec=>{const s=Math.max(0,Math.floor(sec));const m=Math.floor(s/60);const r=s%60;return `${m}:${pad(r)}`;}
-const validMMSS=str=>/^\d{1,2}:\d{2}$/.test(String(str||""));
-function withinPeriod(str){const s=mmssToSec(str);return s>=0&&s<=periodLenMin*60;}
+      /* ---------- DOM ---------- */
+      const el = (id) => document.getElementById(id);
+      const $status = el("status"),
+        $stPeriod = el("stPeriod"),
+        $stTeam = el("stTeam"),
+        $stGoalie = el("stGoalie");
+      const $startCard = el("startCard"),
+        $appMain = el("appMain");
+      const $periodLen = el("periodLen"),
+        $initialTeam = el("initialTeam"),
+        $haptics = el("haptics"),
+        $btnStartGame = el("btnStartGame");
+      const $periodSetup = el("periodSetup"),
+        $startGoalie = el("startGoalie"),
+        $btnStartPeriod = el("btnStartPeriod");
+      const $btnSave = el("btnSave"),
+        $btnGoal = el("btnGoal");
+      const $toggleSwitch = el("toggleSwitch"),
+        $switchPanel = el("switchPanel"),
+        $newGoalie = el("newGoalie"),
+        $switchClock = el("switchClock"),
+        $btnConfirmSwitch = el("btnConfirmSwitch");
+      const $btnPeriodOrEnd = el("btnPeriodOrEnd"),
+        $btnUndo = el("btnUndo"),
+        $btnReset = el("btnReset");
+      const $tallyBody = el("tallyBody"),
+        $noDataRow = el("noDataRow");
 
-/* ---------- State ---------- */
-let periodLenMin=15,haptics=false;
-let gameStarted=false,gameEnded=false;
-let period=1,team="Home",activeGoalie="",periodHasStarted=false,shiftStartClock="15:00";
-const shots=[],shifts=[],seeded=[],actions=[];
+      /* ---------- Haptics ---------- */
+      function vibrate(kind) {
+        if (!haptics) return;
+        try {
+          if (!("vibrate" in navigator)) return;
+          if (kind === "save") navigator.vibrate(12);
+          else navigator.vibrate([35, 25, 35]);
+        } catch (e) {}
+      }
 
-/* ---------- DOM helpers ---------- */
-const el=id=>document.getElementById(id);
-const $status=el('status'),$stPeriod=el('stPeriod'),$stTeam=el('stTeam'),$stGoalie=el('stGoalie');
-const $startCard=el('startCard'),$appMain=el('appMain');
-const $periodLen=el('periodLen'),$initialTeam=el('initialTeam'),$haptics=el('haptics'),$btnStartGame=el('btnStartGame');
-const $periodSetup=el('periodSetup'),$startGoalie=el('startGoalie'),$btnStartPeriod=el('btnStartPeriod');
-const $btnSave=el('btnSave'),$btnGoal=el('btnGoal');
-const $toggleSwitch=el('toggleSwitch'),$switchPanel=el('switchPanel'),$newGoalie=el('newGoalie'),$switchClock=el('switchClock'),$btnConfirmSwitch=el('btnConfirmSwitch');
-const $btnPeriodOrEnd=el('btnPeriodOrEnd'),$btnUndo=el('btnUndo'),$btnReset=el('btnReset');
-const $tallyBody=el('tallyBody'),$noDataRow=el('noDataRow');
-const $helpBackdrop=el('helpBackdrop'),$helpClose=el('helpClose'),$helpCloseX=el('helpCloseX'),$btnHelp=el('btnHelp');
+      /* ---------- Render ---------- */
+      function renderStatus() {
+        if (!gameStarted) {
+          $status.classList.add("hidden");
+          return;
+        }
+        $status.classList.remove("hidden");
+        $stPeriod.textContent = `P${period}`;
+        $stTeam.textContent = team;
+        $stGoalie.textContent = activeGoalie || "—";
+      }
+      function buildStats() {
+        const map = new Map(),
+          base = () => ({ shots: 0, goals: 0 }),
+          perBase = () => ({ P1: base(), P2: base(), P3: base() });
+        function ensure(t, g) {
+          const k = `${t}|${g}`;
+          if (!map.has(k)) map.set(k, { team: t, goalie: g, per: perBase(), iceSec: 0 });
+          return map.get(k);
+        }
+        for (const s of seeded) ensure(s.team, s.goalie);
+        for (const s of shots) {
+          const r = ensure(s.team, s.goalie),
+            k = s.period === 1 ? "P1" : s.period === 2 ? "P2" : "P3";
+          r.per[k].shots++;
+          if (s.result === "Goal") r.per[k].goals++;
+        }
+        for (const sh of shifts) {
+          const r = ensure(sh.team, sh.goalie);
+          r.iceSec += Math.max(0, mmssToSec(sh.timeOn) - mmssToSec(sh.timeOff));
+        }
+        return map;
+      }
+      function renderTally() {
+        const map = buildStats();
+        $tallyBody.innerHTML = "";
+        if (map.size === 0) {
+          $tallyBody.appendChild($noDataRow);
+          renderCurrentCounters();
+          return;
+        }
+        for (const r of map.values()) {
+          const c = (p) => ({
+            shots: r.per[p].shots,
+            goals: r.per[p].goals
+          });
+          const p1 = c("P1"),
+            p2 = c("P2"),
+            p3 = c("P3");
 
-/* ---------- Haptics ---------- */
-function vibrate(kind){if(!haptics) return; try{if(!('vibrate'in navigator))return;if(kind==='save')navigator.vibrate(12);else navigator.vibrate([35,25,35]);}catch(e){}}
+          const td = (x) => `
+      <td class="center">
+        <span class="shotsCell">
+          <span class="shotsNum">${x.shots}</span>
+          <span class="goalsNum">${x.goals} G</span>
+        </span>
+      </td>
+    `;
 
-/* ---------- UI Controls gate ---------- */
-function updateControls(){
-  $btnSave.disabled = !periodHasStarted || gameEnded;
-  $btnGoal.disabled = !periodHasStarted || gameEnded;
-  const canSwitch = periodHasStarted && !gameEnded;
-  $toggleSwitch.disabled = !canSwitch;
-  $btnConfirmSwitch.disabled = !canSwitch;
-  const isNextMode = (period < 3);
-  $btnPeriodOrEnd.disabled = gameEnded || (isNextMode && !periodHasStarted);
-}
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+      <td>${r.team}</td>
+      <td style="font-weight:700">${r.goalie}</td>
+      ${td(p1)}${td(p2)}${td(p3)}
+      <td class="center">${secToMMSS(r.iceSec)}</td>
+    `;
+          $tallyBody.appendChild(tr);
+        }
 
-/* ---------- Render ---------- */
-function renderStatus(){
-  if(!gameStarted){$status.classList.add('hidden');return}
-  $status.classList.remove('hidden');
-  $stPeriod.textContent=`P${period}`;
-  $stTeam.textContent=team;
-  $stGoalie.textContent=activeGoalie||'—';
-}
-function buildStats(){
-  const map=new Map(),base=()=>({shots:0,goals:0}),perBase=()=>({P1:base(),P2:base(),P3:base()});
-  function ensure(t,g){const k=`${t}|${g}`;if(!map.has(k))map.set(k,{team:t,goalie:g,per:perBase(),iceSec:0});return map.get(k);}
-  for(const s of seeded) ensure(s.team,s.goalie);
-  for(const s of shots){const r=ensure(s.team,s.goalie),k=s.period===1?'P1':s.period===2?'P2':'P3';r.per[k].shots++; if(s.result==='Goal') r.per[k].goals++;}
-  for(const sh of shifts){const r=ensure(sh.team,s.goalie); r.iceSec += Math.max(0, mmssToSec(sh.timeOn)-mmssToSec(sh.timeOff));}
-  return map;
-}
-function renderTally(){
-  const map=buildStats();
-  $tallyBody.innerHTML='';
-  if(map.size===0){$tallyBody.appendChild($noDataRow);return;}
-  for(const r of map.values()){
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${r.team}</td><td style="font-weight:700">${r.goalie}</td><td class="center">${r.per.P1.shots}/${r.per.P1.goals}</td><td class="center">${r.per.P2.shots}/${r.per.P2.goals}</td><td class="center">${r.per.P3.shots}/${r.per.P3.goals}</td><td class="center">${secToMMSS(r.iceSec)}</td>`;
-    $tallyBody.appendChild(tr);
-  }
-}
+        // ✅ always refresh counters after tally
+        renderCurrentCounters();
+      }
 
-/* ---------- Seed helpers ---------- */
-function seedGoalieIfNeeded(goalie,t){if(!goalie)return;const g=String(goalie);if(seeded.some(x=>x.goalie===g&&x.team===t))return;seeded.push({team:t,goalie:g});}
-function goalieHasData(t,g){const n=String(g);return shots.some(x=>x.team===t&&String(x.goalie)===n)||shifts.some(x=>x.team===t&&String(x.goalie)===n);}
-function unseedIfOrphan(t,g){const n=String(g);const i=seeded.findIndex(x=>x.team===t&&String(x.goalie)===n);if(i!==-1&&!goalieHasData(t,n)){seeded.splice(i,1);}}
+      function calcCurrentPeriodCounts() {
+        // Totals for the *current* (team, activeGoalie, period)
+        if (!periodHasStarted || !activeGoalie) return { shots: 0, goals: 0 };
+        let s = 0,
+          g = 0;
+        for (const rec of shots) {
+          if (rec.team === team && String(rec.goalie) === String(activeGoalie) && rec.period === period) {
+            s += 1;
+            if (rec.result === "Goal") g += 1;
+          }
+        }
+        return { shots: s, goals: g };
+      }
 
-/* ---------- Core actions ---------- */
-function startGame(){
-  const v=($periodLen.value||'').trim();
-  if(!/^\d+$/.test(v)){alert('Enter a valid period length (minutes).');return;}
-  periodLenMin=Math.max(1,parseInt(v,10));
-  haptics=!!$haptics.checked;
-  gameStarted=true; gameEnded=false; period=1; team=($initialTeam.value==='Away')?'Away':'Home';
-  activeGoalie=''; periodHasStarted=false; shiftStartClock=`${periodLenMin}:00`;
-  shots.length=0; shifts.length=0; seeded.length=0; actions.length=0;
-  $startCard.classList.add('hidden'); $appMain.classList.remove('hidden');
-  $periodSetup.classList.remove('hidden');
-  $btnPeriodOrEnd.textContent='Next Period';
-  renderStatus(); renderTally(); updateControls();
-  actions.push({type:'startGame'});
-}
-function startPeriod(){
-  if(gameEnded)return;
-  const g=String(($startGoalie.value||'').trim());
-  if(!g){alert('Enter the goalie # starting the period');return;}
-  activeGoalie=g; periodHasStarted=true; shiftStartClock=`${periodLenMin}:00`; seedGoalieIfNeeded(g,team);
-  $periodSetup.classList.add('hidden');
-  renderStatus(); renderTally(); updateControls();
-  actions.push({type:'periodStart',payload:{goalie:g}});
-  $startGoalie.value='';
-}
-function recordShot(result){
-  if(gameEnded||!periodHasStarted||!activeGoalie)return;
-  if(result==='Save')vibrate('save'); else vibrate('goal');
-  const rec={team,goalie:String(activeGoalie),period,result}; shots.push(rec);
-  actions.push({type:'shot',payload:rec}); renderTally();
-}
-function toggleSwitchPanel(){if(gameEnded||!periodHasStarted)return; $switchPanel.classList.toggle('hidden');}
-function confirmSwitch(){
-  if(gameEnded||!periodHasStarted||!activeGoalie)return;
-  const newG=String(($newGoalie.value||'').trim()); const clk=String(($switchClock.value||'').trim());
-  if(!/^\d+$/.test(newG)){alert('Enter the new goalie #');return;}
-  if(!validMMSS(clk)){alert('Enter the game clock time as MM:SS');return;}
-  if(!withinPeriod(clk)){alert(`Clock must be between 00:00 and ${periodLenMin}:00`);return;}
-  if(mmssToSec(clk)>mmssToSec(shiftStartClock)){alert(`Time must be <= current shift start (${shiftStartClock}) because the clock counts down.`);return;}
-  const outgoing={team,goalie:String(activeGoalie),period,timeOn:shiftStartClock,timeOff:clk}; shifts.push(outgoing);
-  const prevGoalie=activeGoalie, prevShiftStart=shiftStartClock; activeGoalie=newG; shiftStartClock=clk; seedGoalieIfNeeded(newG,team);
-  $newGoalie.value=''; $switchClock.value=''; $switchPanel.classList.add('hidden');
-  actions.push({type:'switch',payload:{outgoingShift:outgoing,prevGoalie,prevShiftStart,incoming:newG}}); renderStatus(); renderTally();
-}
-function closeOpenShiftAt(endClock){
-  if(periodHasStarted&&activeGoalie){
-    const seg={team,goalie:String(activeGoalie),period,timeOn:shiftStartClock,timeOff:endClock||"00:00"};
-    shifts.push(seg); return seg;
-  } return null;
-}
-function nextPeriod(){
-  if(gameEnded)return;
-  if(period>=3){endGame();return;}
-  let closed=null;
-  if(periodHasStarted&&activeGoalie){closed={team,goalie:String(activeGoalie),period,timeOn:shiftStartClock,timeOff:"00:00"};shifts.push(closed);}
-  const snap={prevPeriod:period,prevTeam:team,prevGoalie:activeGoalie,prevShiftStart:shiftStartClock,prevPeriodHasStarted:periodHasStarted,closed};
-  actions.push({type:'startPeriod',payload:snap});
-  period+=1; team=(team==='Home'?'Away':'Home'); activeGoalie=''; periodHasStarted=false; shiftStartClock=`${periodLenMin}:00`;
-  $periodSetup.classList.remove('hidden'); if(period>=3)$btnPeriodOrEnd.textContent='End Game';
-  renderStatus(); renderTally(); updateControls();
-}
-function endGame(){
-  if(gameEnded)return;
-  if(!confirm("End the game and close the final shift at 00:00?"))return;
-  const closed=closeOpenShiftAt("00:00"); actions.push({type:'endGame',payload:{closed}}); renderTally();
-  alert("Game Ended. Please take this phone to the team manager and don't hit Reset or refresh the page. Thanks for helping!");
-  gameEnded=true;
-  updateControls();
-  $btnUndo.disabled=true;
-}
-/* ---------- PATCH: rebuild buildStats to ensure correct ice-time goalie ---------- */
-function buildStats(){
-  const map=new Map(), base=()=>({shots:0,goals:0}), perBase=()=>({P1:base(),P2:base(),P3:base()});
-  function ensure(t,g){const k=`${t}|${g}`; if(!map.has(k)) map.set(k,{team:t,goalie:g,per:perBase(),iceSec:0}); return map.get(k);}
+      function renderCurrentCounters() {
+        const elShots = document.getElementById("currShots");
+        const elGoals = document.getElementById("currGoals");
+        if (!elShots || !elGoals) {
+          return;
+        }
+        const { shots, goals } = calcCurrentPeriodCounts();
+        elShots.textContent = shots;
+        elGoals.textContent = goals;
+      }
 
-  // Seed rows for any goalie we've seen
-  for(const s of seeded) ensure(s.team, s.goalie);
+      function setShotButtonsEnabled(on) {
+        $btnSave.disabled = !on || gameEnded;
+        $btnGoal.disabled = !on || gameEnded;
+      }
 
-  // Aggregate shots/goals
-  for(const s of shots){
-    const r = ensure(s.team, s.goalie);
-    const k = s.period===1 ? 'P1' : s.period===2 ? 'P2' : 'P3';
-    r.per[k].shots++;
-    if(s.result==='Goal') r.per[k].goals++;
-  }
+      /* ---------- Seed helpers ---------- */
+      function seedGoalieIfNeeded(goalie, t) {
+        if (!goalie) return;
+        const g = String(goalie);
+        if (seeded.some((x) => x.goalie === g && x.team === t)) return;
+        seeded.push({ team: t, goalie: g });
+      }
+      function goalieHasData(t, g) {
+        const n = String(g);
+        return (
+          shots.some((x) => x.team === t && String(x.goalie) === n) ||
+          shifts.some((x) => x.team === t && String(x.goalie) === n)
+        );
+      }
+      function unseedIfOrphan(t, g) {
+        const n = String(g);
+        const i = seeded.findIndex((x) => x.team === t && String(x.goalie) === n);
+        if (i !== -1 && !goalieHasData(t, n)) {
+          seeded.splice(i, 1);
+        }
+      }
 
-  // Sum ice-time across all closed/open shifts
-  for(const sh of shifts){
-    const r = ensure(sh.team, sh.goalie); // ✅ use sh.goalie (not s.goalie)
-    r.iceSec += Math.max(0, mmssToSec(sh.timeOn) - mmssToSec(sh.timeOff));
-  }
+      /* ---------- Actions ---------- */
+      function startGame() {
+        const v = ($periodLen.value || "").trim();
+        if (!/^\d+$/.test(v)) {
+          alert("Enter a valid period length (minutes).");
+          return;
+        }
+        periodLenMin = Math.max(1, parseInt(v, 10));
+        haptics = !!$haptics.checked;
+        gameStarted = true;
+        gameEnded = false;
+        period = 1;
+        team = $initialTeam.value === "Away" ? "Away" : "Home";
+        activeGoalie = "";
+        periodHasStarted = false;
+        shiftStartClock = `${periodLenMin}:${pad(0)}`;
+        shots.length = 0;
+        shifts.length = 0;
+        seeded.length = 0;
+        actions.length = 0;
+        $startCard.classList.add("hidden");
+        $appMain.classList.remove("hidden");
+        $periodSetup.classList.remove("hidden");
+        setShotButtonsEnabled(false);
+        $btnPeriodOrEnd.textContent = "Next Period";
+        renderStatus();
+        renderTally();
+        actions.push({ type: "startGame" });
+      }
+      function startPeriod() {
+        if (gameEnded) return;
+        const g = String(($startGoalie.value || "").trim());
+        if (!g) {
+          alert("Enter the goalie # starting the period");
+          return;
+        }
+        activeGoalie = g;
+        periodHasStarted = true;
+        shiftStartClock = `${periodLenMin}:${pad(0)}`;
+        seedGoalieIfNeeded(g, team);
+        $periodSetup.classList.add("hidden");
+        setShotButtonsEnabled(true);
+        renderStatus();
+        renderTally();
+        actions.push({ type: "periodStart", payload: { goalie: g } });
+        $startGoalie.value = "";
+      }
+      function recordShot(result) {
+        if (gameEnded || !periodHasStarted || !activeGoalie) return;
+        if (result === "Save") vibrate("save");
+        else vibrate("goal");
+        const rec = { team, goalie: String(activeGoalie), period, result };
+        shots.push(rec);
+        actions.push({ type: "shot", payload: rec });
+        renderTally();
+      }
+      function toggleSwitchPanel() {
+        if (gameEnded) return;
+        $switchPanel.classList.toggle("hidden");
+      }
+      function confirmSwitch() {
+        if (gameEnded || !periodHasStarted || !activeGoalie) return;
+        const newG = String(($newGoalie.value || "").trim());
+        const clk = String(($switchClock.value || "").trim());
+        if (!/^\d+$/.test(newG)) {
+          alert("Enter the new goalie #");
+          return;
+        }
+        if (!validMMSS(clk)) {
+          alert("Enter the game clock time as MM:SS");
+          return;
+        }
+        if (!withinPeriod(clk)) {
+          alert(`Clock must be between 00:00 and ${periodLenMin}:00`);
+          return;
+        }
+        if (mmssToSec(clk) > mmssToSec(shiftStartClock)) {
+          alert(`Time must be <= current shift start (${shiftStartClock}) because the clock counts down.`);
+          return;
+        }
+        const outgoing = { team, goalie: String(activeGoalie), period, timeOn: shiftStartClock, timeOff: clk };
+        shifts.push(outgoing);
+        const prevGoalie = activeGoalie,
+          prevShiftStart = shiftStartClock;
+        activeGoalie = newG;
+        shiftStartClock = clk;
+        seedGoalieIfNeeded(newG, team);
+        $newGoalie.value = "";
+        $switchClock.value = "";
+        $switchPanel.classList.add("hidden");
+        actions.push({
+          type: "switch",
+          payload: { outgoingShift: outgoing, prevGoalie, prevShiftStart, incoming: newG }
+        });
+        renderStatus();
+        renderTally();
+      }
+      function closeOpenShiftAt(endClock) {
+        if (periodHasStarted && activeGoalie) {
+          const seg = {
+            team,
+            goalie: String(activeGoalie),
+            period,
+            timeOn: shiftStartClock,
+            timeOff: endClock || "00:00"
+          };
+          shifts.push(seg);
+          return seg;
+        }
+        return null;
+      }
+      function nextPeriod() {
+        if (gameEnded) return;
+        if (period >= 3) {
+          endGame();
+          return;
+        }
+        let closed = null;
+        if (periodHasStarted && activeGoalie) {
+          closed = { team, goalie: String(activeGoalie), period, timeOn: shiftStartClock, timeOff: "00:00" };
+          shifts.push(closed);
+        }
+        const snap = {
+          prevPeriod: period,
+          prevTeam: team,
+          prevGoalie: activeGoalie,
+          prevShiftStart: shiftStartClock,
+          prevPeriodHasStarted: periodHasStarted,
+          closed
+        };
+        actions.push({ type: "startPeriod", payload: snap });
+        period += 1;
+        team = team === "Home" ? "Away" : "Home";
+        activeGoalie = "";
+        periodHasStarted = false;
+        shiftStartClock = `${periodLenMin}:${pad(0)}`;
+        $periodSetup.classList.remove("hidden");
+        setShotButtonsEnabled(false);
+        if (period >= 3) $btnPeriodOrEnd.textContent = "End Game";
+        renderStatus();
+        renderTally();
+      }
+      function endGame() {
+        if (gameEnded) return;
+        if (!confirm("End the game and close the final shift at 00:00?")) return;
+        const closed = closeOpenShiftAt("00:00");
+        actions.push({ type: "endGame", payload: { closed } });
+        renderTally();
+        alert(
+          "Game Ended. Please take this phone to the team manager and don't hit Reset or refresh the page. Thanks for helping!"
+        );
+        gameEnded = true;
+        setShotButtonsEnabled(false);
+        $btnPeriodOrEnd.disabled = true;
+        $toggleSwitch.disabled = true;
+        $btnConfirmSwitch.disabled = true;
+        $btnUndo.disabled = true;
+      }
+      function undo() {
+        if (gameEnded || !actions.length) return;
+        const last = actions[actions.length - 1];
+        if (last.type === "shot") {
+          shots.pop();
+        } else if (last.type === "switch") {
+          shifts.pop();
+          if (last.payload && last.payload.incoming) unseedIfOrphan(team, String(last.payload.incoming));
+          activeGoalie = last.payload.prevGoalie;
+          shiftStartClock = last.payload.prevShiftStart;
+        } else if (last.type === "startPeriod") {
+          if (last.payload.closed) shifts.pop();
+          period = last.payload.prevPeriod;
+          team = last.payload.prevTeam;
+          activeGoalie = last.payload.prevGoalie;
+          shiftStartClock = last.payload.prevShiftStart;
+          periodHasStarted = last.payload.prevPeriodHasStarted;
+          if (!periodHasStarted) $periodSetup.classList.remove("hidden");
+          setShotButtonsEnabled(!!periodHasStarted);
+          $btnPeriodOrEnd.textContent = period >= 3 ? "End Game" : "Next Period";
+        } else if (last.type === "periodStart") {
+          unseedIfOrphan(team, String(last.payload.goalie));
+          activeGoalie = "";
+          shiftStartClock = `${periodLenMin}:${pad(0)}`;
+          periodHasStarted = false;
+          $periodSetup.classList.remove("hidden");
+          $startGoalie.value = last.payload.goalie;
+          setShotButtonsEnabled(false);
+        } else if (last.type === "endGame") {
+          if (last.payload && last.payload.closed) shifts.pop();
+        }
+        actions.pop();
+        renderStatus();
+        renderTally();
+      }
+      function resetAll() {
+        if (!confirm("Reset everything and clear all tallies?")) return;
+        periodLenMin = 20;
+        haptics = false;
+        gameStarted = false;
+        gameEnded = false;
+        period = 1;
+        team = "Home";
+        activeGoalie = "";
+        periodHasStarted = false;
+        shiftStartClock = "20:00";
+        shots.length = 0;
+        shifts.length = 0;
+        seeded.length = 0;
+        actions.length = 0;
+        $periodLen.value = "20";
+        $initialTeam.value = "Home";
+        $haptics.checked = false;
+        $appMain.classList.add("hidden");
+        $startCard.classList.remove("hidden");
+        $periodSetup.classList.add("hidden");
+        $switchPanel.classList.add("hidden");
+        $newGoalie.value = "";
+        $switchClock.value = "";
+        $startGoalie.value = "";
+        $btnPeriodOrEnd.textContent = "Next Period";
+        $btnPeriodOrEnd.disabled = false;
+        $toggleSwitch.disabled = false;
+        $btnConfirmSwitch.disabled = false;
+        $btnUndo.disabled = false;
+        setShotButtonsEnabled(false);
+        renderStatus();
+        renderTally();
+      }
 
-  return map;
-}
+      /* ---------- Events ---------- */
+      $btnStartGame.addEventListener("click", startGame);
+      $btnStartPeriod.addEventListener("click", startPeriod);
+      $btnSave.addEventListener("click", () => recordShot("Save"));
+      $btnGoal.addEventListener("click", () => recordShot("Goal"));
+      $toggleSwitch.addEventListener("click", toggleSwitchPanel);
+      $btnConfirmSwitch.addEventListener("click", confirmSwitch);
+      $btnPeriodOrEnd.addEventListener("click", () => (period < 3 ? nextPeriod() : endGame()));
+      $btnUndo.addEventListener("click", undo);
+      $btnReset.addEventListener("click", resetAll);
+      $periodLen.addEventListener("input", (e) => {
+        const v = e.target.value;
+        if (!/^\d*$/.test(v)) e.target.value = v.replace(/\D+/g, "");
+      });
 
-/* ---------- Undo & Reset ---------- */
-function undo(){
-  if(gameEnded || !actions.length) return;
-  const last = actions[actions.length-1];
+      /* ---------- Initial render ---------- */
+      renderStatus();
+      renderTally();
+    </script>
 
-  if(last.type==='shot'){
-    shots.pop();
-  } else if(last.type==='switch'){
-    // Remove last shift segment and revert active goalie + shift start
-    shifts.pop();
-    if(last.payload && last.payload.incoming) unseedIfOrphan(team, String(last.payload.incoming));
-    activeGoalie = last.payload.prevGoalie;
-    shiftStartClock = last.payload.prevShiftStart;
-  } else if(last.type==='startPeriod'){
-    // Revert period increment snapshot
-    if(last.payload.closed) shifts.pop();
-    period = last.payload.prevPeriod;
-    team = last.payload.prevTeam;
-    activeGoalie = last.payload.prevGoalie;
-    shiftStartClock = last.payload.prevShiftStart;
-    periodHasStarted = last.payload.prevPeriodHasStarted;
-    if(!periodHasStarted) $periodSetup.classList.remove('hidden');
-    if(period < 3) $btnPeriodOrEnd.textContent = 'Next Period';
-    renderStatus();
-  } else if(last.type==='periodStart'){
-    // Back out of a period start (unseed incoming goalie if orphan)
-    unseedIfOrphan(team, String(last.payload.goalie));
-    activeGoalie = '';
-    shiftStartClock = `${periodLenMin}:00`;
-    periodHasStarted = false;
-    $periodSetup.classList.remove('hidden');
-    $startGoalie.value = last.payload.goalie; // convenience
-  } else if(last.type==='endGame'){
-    if(last.payload && last.payload.closed) shifts.pop();
-    gameEnded = false;
-  }
-
-  actions.pop();
-  renderTally();
-  updateControls();
-}
-
-function resetAll(){
-  if(!confirm('Reset everything and clear all tallies?')) return;
-
-  periodLenMin = 15; haptics = false;
-  gameStarted = false; gameEnded = false;
-  period = 1; team = 'Home'; activeGoalie = '';
-  periodHasStarted = false; shiftStartClock = "15:00";
-
-  shots.length = 0; shifts.length = 0; seeded.length = 0; actions.length = 0;
-
-  $periodLen.value = '15';
-  $initialTeam.value = 'Home';
-  $haptics.checked = false;
-
-  $appMain.classList.add('hidden');
-  $startCard.classList.remove('hidden');
-  $periodSetup.classList.add('hidden');
-  $switchPanel.classList.add('hidden');
-  $newGoalie.value = '';
-  $switchClock.value = '';
-  $startGoalie.value = '';
-
-  $btnPeriodOrEnd.textContent = 'Next Period';
-  $btnUndo.disabled = false;
-
-  renderStatus();
-  renderTally();
-  updateControls();
-}
-
-/* ---------- Help modal wiring (focus restore + Esc + backdrop click) ---------- */
-let _helpPrevFocus = null;
-
-function openHelp(){
-  _helpPrevFocus = document.activeElement;
-  $helpBackdrop.classList.remove('hidden');
-  // prevent background scroll
-  document.body.style.overscrollBehavior = 'contain';
-  document.body.style.overflow = 'hidden';
-  // focus primary button
-  $helpClose.focus();
-}
-
-function closeHelp(){
-  $helpBackdrop.classList.add('hidden');
-  // restore scroll
-  document.body.style.overscrollBehavior = '';
-  document.body.style.overflow = '';
-  // return focus to invoking control
-  if (_helpPrevFocus && typeof _helpPrevFocus.focus === 'function') {
-    _helpPrevFocus.focus();
-  }
-}
-
-/* ---------- Event bindings ---------- */
-$btnHelp.addEventListener('click', openHelp);
-$helpClose.addEventListener('click', closeHelp);
-$helpCloseX.addEventListener('click', closeHelp);
-$helpBackdrop.addEventListener('click', (e)=>{ if(e.target === $helpBackdrop) closeHelp(); });
-document.addEventListener('keydown', (e)=>{
-  const open = !$helpBackdrop.classList.contains('hidden');
-  if (open && e.key === 'Escape') {
-    e.preventDefault();
-    closeHelp();
-  }
-});
-
-$btnStartGame.addEventListener('click', startGame);
-$btnStartPeriod.addEventListener('click', startPeriod);
-$btnSave.addEventListener('click', ()=>recordShot('Save'));
-$btnGoal.addEventListener('click', ()=>recordShot('Goal'));
-$toggleSwitch.addEventListener('click', toggleSwitchPanel);
-$btnConfirmSwitch.addEventListener('click', confirmSwitch);
-$btnPeriodOrEnd.addEventListener('click', ()=> (period<3 ? nextPeriod() : endGame()));
-$btnUndo.addEventListener('click', undo);
-$btnReset.addEventListener('click', resetAll);
-
-// Numeric-only minutes input
-$periodLen.addEventListener('input', (e)=>{
-  const v = e.target.value;
-  if(!/^\d*$/.test(v)) e.target.value = v.replace(/\D+/g,'');
-});
-
-/* ---------- Initial render ---------- */
-renderStatus();
-renderTally();
-updateControls();
-</script>
-<!-- SW registration tied to APP_BUILD -->
-<script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    const v = (window.APP_BUILD != null) ? String(window.APP_BUILD) : 'dev';
-    navigator.serviceWorker.register(`service-worker.js?v=${encodeURIComponent(v)}`, { scope: './' })
-      .catch(console.error);
-  });
-}
-</script>
-</body>
+    <!-- SW registration tied to APP_BUILD -->
+    <script>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          const v = window.APP_BUILD != null ? String(window.APP_BUILD) : "dev";
+          navigator.serviceWorker
+            .register(`service-worker.js?v=${encodeURIComponent(v)}`, { scope: "./" })
+            .catch(console.error);
+        });
+      }
+    </script>
+  </body>
 </html>
