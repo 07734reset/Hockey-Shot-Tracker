@@ -96,7 +96,7 @@
       <div class="chip"><div class="lab">Team</div><div class="val" id="stTeam">Home</div></div>
       <div class="chip"><div class="lab">Goalie #</div><div class="val" id="stGoalie">—</div></div>
     </div>
-    <div class="currentCounters" style="margin-top:10px">
+    <div id="countersStrip" class="currentCounters hidden" style="margin-top:10px">
     <div>
       <div class="lab">This Period — Total Shots</div>
       <div class="val" id="currShots">0</div>
@@ -325,6 +325,14 @@ function renderCurrentCounters(){
   const {shots,goals}=calcCurrentPeriodCounts();
   $stShots.textContent=shots;
   $stGoals.textContent=goals;
+  
+  // Show strip only after period starts
+  const strip = document.getElementById('countersStrip');
+  if (periodHasStarted && !gameEnded) {
+    strip.classList.remove('hidden');
+  } else {
+    strip.classList.add('hidden');
+  }
 }
 function renderTally(){
   const map=buildStats();
