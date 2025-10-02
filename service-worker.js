@@ -1,87 +1,91 @@
 // service-worker.js
-// Robust offline shell for GitHub Pages + subpaths
-const SW_VERSION = (new URL(location.href)).searchParams.get('v') || 'dev';
-const STATIC_CACHE = `sogt-static-v${SW_VERSION}`;
+// Solid offline for GitHub Pages + iOS PWA (no fragile redirects)
+const SW_VERSION = (new URL(self.location.href)).searchParams.get('v') || 'dev';
+const CACHE_NAME = `sogt-cache-v${SW_VERSION}`;
 
-// Build absolute URLs relative to the SW scope
+// Scope base (e.g. https://user.github.io/repo/)
 const SCOPE_URL = new URL(self.registration.scope);
 const abs = (p) => new URL(p, SCOPE_URL).toString();
 
-// Cache both "/" and "index.html" forms to be safe on GitHub Pages
-const INDEX_URLS = [abs('./'), abs('index.html')];
+// Explicitly request index.html (avoid caching "./" which may be a redirect)
+const INDEX_REQ = new Request(abs('index.html'), { cache: 'reload' });
 
-// List the static files you want available offline
-const PRECACHE = [
-  ...INDEX_URLS,
+// Assets to precache (add your logo if you use it)
+const ASSETS = [
   abs('manifest.webmanifest'),
   abs('icons/icon-192.png'),
   abs('icons/icon-512.png'),
-  abs('Hounds Logo - no back.avif'), // optional if you use it
+  abs('Hounds Logo - no back.avif'), // optional
 ];
 
-// INSTALL: cache app shell & assets
 self.addEventListener('install', (event) => {
   event.waitUntil((async () => {
-    const cache = await caches.open(STATIC_CACHE);
-    // Use addAll with absolute URLs
-    await cache.addAll(PRECACHE);
+    const cache = await caches.open(CACHE_NAME);
+    // Be defensive: add index first, then the rest individually
+    try {
+      const res = await fetch(INDEX_REQ);
+      if (res && res.ok) await cache.put(INDEX_REQ, res.clone());
+    } catch (e) {
+      // If this fails while online, something is off with the URL; we still continue
+    }
+    for (const url of ASSETS) {
+      try {
+        const r = await fetch(new Request(url, { cache: 'reload' }));
+        if (r && r.ok) await cache.put(url, r.clone());
+      } catch (e) { /* ignore failed assets */ }
+    }
     await self.skipWaiting(); // activate immediately
   })());
 });
 
-// ACTIVATE: clean old caches and take control
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
-    await Promise.all(
-      keys.map(k => (k !== STATIC_CACHE ? caches.delete(k) : Promise.resolve()))
-    );
+    await Promise.all(keys.map(k => (k === CACHE_NAME ? null : caches.delete(k))));
     await self.clients.claim();
   })());
 });
 
-// FETCH: navigations = network-first, fallback to cached index; others = cache-first
+// Navigations: network-first, fallback to cached index.html when offline
 self.addEventListener('fetch', (event) => {
   const req = event.request;
 
-  // Navigation requests (user opens/refreshes the page)
-  if (req.mode === 'navigate') {
+  // Page navigations
+  if (req.mode === 'navigate' || (req.destination === 'document')) {
     event.respondWith((async () => {
       try {
-        // Prefer a fresh index when online
+        // Always try fresh HTML when online
         return await fetch(req, { cache: 'no-store' });
-      } catch (err) {
-        // Offline fallback: serve cached app shell
-        const cache = await caches.open(STATIC_CACHE);
-        for (const url of INDEX_URLS) {
-          const cached = await cache.match(url);
-          if (cached) return cached;
-        }
+      } catch (e) {
+        // Offline fallback to cached index.html
+        const cache = await caches.open(CACHE_NAME);
+        const cached = await cache.match(INDEX_REQ);
+        if (cached) return cached;
+        // Last resort: plain message
         return new Response('Offline', { status: 503, statusText: 'Offline' });
       }
     })());
     return;
   }
 
-  // Non-navigation GETs: cache-first, then network
+  // Other GET requests: cache-first, then network
   if (req.method === 'GET') {
     event.respondWith((async () => {
-      const cache = await caches.open(STATIC_CACHE);
+      const cache = await caches.open(CACHE_NAME);
       const cached = await cache.match(req);
       if (cached) return cached;
       try {
         const fresh = await fetch(req);
         if (fresh && fresh.ok) cache.put(req, fresh.clone());
         return fresh;
-      } catch (err) {
-        // If offline and not in cache, error out
+      } catch (e) {
         return cached || Response.error();
       }
     })());
   }
 });
 
-// Allow client to force-activate a waiting SW (optional)
-self.addEventListener('message', (event) => {
-  if (event.data === 'SKIP_WAITING') self.skipWaiting();
+// Optional: let the page tell a waiting SW to activate now
+self.addEventListener('message', (e) => {
+  if (e.data === 'SKIP_WAITING') self.skipWaiting();
 });
