@@ -90,10 +90,20 @@
   <div class="card">
     <h1>Shots-On-Goal Tracker</h1>
     <div id="status" class="status hidden">
-      <div class="chip"><div class="lab">Current Period</div><div class="val" id="stPeriod">P1</div></div>
-      <div class="chip"><div class="lab">Current Team</div><div class="val" id="stTeam">Home</div></div>
-      <div class="chip"><div class="lab">Current Goalie #</div><div class="val" id="stGoalie">—</div></div>
+      <div class="chip"><div class="lab">Period</div><div class="val" id="stPeriod">P1</div></div>
+      <div class="chip"><div class="lab">Team</div><div class="val" id="stTeam">Home</div></div>
+      <div class="chip"><div class="lab">Goalie #</div><div class="val" id="stGoalie">—</div></div>
     </div>
+    <div class="currentCounters" style="margin-top:10px">
+    <div>
+      <div class="lab">This Period — Total Shots</div>
+      <div class="val" id="currShots">0</div>
+    </div>
+    <div>
+      <div class="lab">Goals</div>
+      <div class="goals" id="currGoals">0</div>
+    </div>
+  </div>
   </div>
 
   <!-- START SCREEN -->
@@ -133,18 +143,8 @@
       <button id="btnStartPeriod" class="btn btn-secondary" style="width:100%;margin-top:12px">Start Period</button>
     </div>
 
-    <!-- Shot buttons (with current counters) -->
+    <!-- Shot buttons  -->
     <div class="card">
-      <div class="currentCounters">
-        <div>
-          <div class="lab">This Period — Total Shots</div>
-          <div class="val" id="currShots">0</div>
-        </div>
-        <div>
-          <div class="lab">Goals</div>
-          <div class="goals" id="currGoals">0</div>
-        </div>
-      </div>
       <div class="grid2">
         <button id="btnSave" class="btn btn-primary" disabled>Save</button>
         <button id="btnGoal" class="btn btn-hl" disabled>Goal</button>
@@ -236,7 +236,7 @@
 <script>
 /* ---------- Version auto-increment (keep if you want auto) ---------- */
 (function(){
-  const SEMVER_BASE="v2.0.1";
+  const SEMVER_BASE="v2.1.2";
   function hashString(str){let h=5381;for(let i=0;i<str.length;i++)h=((h<<5)+h)+str.charCodeAt(i);return(h>>>0).toString(36);}
   var CURRENT_SCRIPT=document.currentScript;
   if(!CURRENT_SCRIPT){const scripts=Array.from(document.scripts).filter(s=>s.src==="");CURRENT_SCRIPT=scripts[scripts.length-1]||null;}
@@ -495,5 +495,18 @@ if ('serviceWorker' in navigator) {
   });
 }
 </script>
+<script>
+// Prevent double-tap zoom on buttons (iOS Safari)
+document.addEventListener('touchend', function (e) {
+  const now = new Date().getTime();
+  if (e.target.closest('button')) {
+    if (window.lastTouchEnd && (now - window.lastTouchEnd) < 300) {
+      e.preventDefault(); // blocks the zoom
+    }
+    window.lastTouchEnd = now;
+  }
+}, { passive: false });
+</script>
+
 </body>
 </html>
