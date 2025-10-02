@@ -1,82 +1,87 @@
 // service-worker.js
+// Robust offline shell for GitHub Pages + subpaths
 const SW_VERSION = (new URL(location.href)).searchParams.get('v') || 'dev';
 const STATIC_CACHE = `sogt-static-v${SW_VERSION}`;
 
-// Files you want cached (don’t include index.html)
+// Build absolute URLs relative to the SW scope
+const SCOPE_URL = new URL(self.registration.scope);
+const abs = (p) => new URL(p, SCOPE_URL).toString();
+
+// Cache both "/" and "index.html" forms to be safe on GitHub Pages
+const INDEX_URLS = [abs('./'), abs('index.html')];
+
+// List the static files you want available offline
 const PRECACHE = [
-  './',
-  './manifest.webmanifest',
-  './icons/icon-192.png',
-  './icons/icon-512.png',
-  // add your logo if you want it cached:
-  './Hounds Logo - no back.avif',
+  ...INDEX_URLS,
+  abs('manifest.webmanifest'),
+  abs('icons/icon-192.png'),
+  abs('icons/icon-512.png'),
+  abs('Hounds Logo - no back.avif'), // optional if you use it
 ];
 
-/** Install: cache static assets */
-self.addEventListener('install', event => {
+// INSTALL: cache app shell & assets
+self.addEventListener('install', (event) => {
   event.waitUntil((async () => {
     const cache = await caches.open(STATIC_CACHE);
+    // Use addAll with absolute URLs
     await cache.addAll(PRECACHE);
-    // Activate immediately
-    await self.skipWaiting();
+    await self.skipWaiting(); // activate immediately
   })());
 });
 
-/** Activate: clean old caches */
-self.addEventListener('activate', event => {
+// ACTIVATE: clean old caches and take control
+self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
     await Promise.all(
-      keys.map(k => (k !== STATIC_CACHE ? caches.delete(k) : null))
+      keys.map(k => (k !== STATIC_CACHE ? caches.delete(k) : Promise.resolve()))
     );
     await self.clients.claim();
   })());
 });
 
-/** Fetch strategy:
- *  - Navigations (index.html): network-first, fallback to cache/offline shell
- *  - Static assets (css/js/img): cache-first, fallback to network
- */
-self.addEventListener('fetch', event => {
+// FETCH: navigations = network-first, fallback to cached index; others = cache-first
+self.addEventListener('fetch', (event) => {
   const req = event.request;
 
-  // Handle page navigations network-first
+  // Navigation requests (user opens/refreshes the page)
   if (req.mode === 'navigate') {
     event.respondWith((async () => {
       try {
-        const fresh = await fetch(req, { cache: 'no-store' });
-        return fresh;
-      } catch (_) {
-        // Fallback to cached shell if available
+        // Prefer a fresh index when online
+        return await fetch(req, { cache: 'no-store' });
+      } catch (err) {
+        // Offline fallback: serve cached app shell
         const cache = await caches.open(STATIC_CACHE);
-        const cached = await cache.match('./');
-        return cached || new Response('Offline', { status: 503 });
+        for (const url of INDEX_URLS) {
+          const cached = await cache.match(url);
+          if (cached) return cached;
+        }
+        return new Response('Offline', { status: 503, statusText: 'Offline' });
       }
     })());
     return;
   }
 
-  // For other requests: cache-first
-  event.respondWith((async () => {
-    const cache = await caches.open(STATIC_CACHE);
-    const cached = await cache.match(req);
-    if (cached) return cached;
-    try {
-      const fresh = await fetch(req);
-      // Optionally cache GET requests
-      if (req.method === 'GET' && fresh.ok) {
-        cache.put(req, fresh.clone());
+  // Non-navigation GETs: cache-first, then network
+  if (req.method === 'GET') {
+    event.respondWith((async () => {
+      const cache = await caches.open(STATIC_CACHE);
+      const cached = await cache.match(req);
+      if (cached) return cached;
+      try {
+        const fresh = await fetch(req);
+        if (fresh && fresh.ok) cache.put(req, fresh.clone());
+        return fresh;
+      } catch (err) {
+        // If offline and not in cache, error out
+        return cached || Response.error();
       }
-      return fresh;
-    } catch (_) {
-      return cached || Response.error();
-    }
-  })());
+    })());
+  }
 });
 
-/** Allow client to force activate a waiting SW */
+// Allow client to force-activate a waiting SW (optional)
 self.addEventListener('message', (event) => {
-  if (event.data === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
+  if (event.data === 'SKIP_WAITING') self.skipWaiting();
 });
