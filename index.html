@@ -84,6 +84,58 @@
   .modal footer{position:sticky;bottom:0;z-index:1;
     padding:12px 16px;border-top:1px solid #eef2f7;
     display:flex;justify-content:flex-end;gap:8px;background:#fff;}
+  /* Start screen polish */
+.start-wrap {
+  display:flex; flex-direction:column; align-items:center; gap:12px;
+}
+.start-title {
+  margin:0; text-align:center; color:var(--brand); font-size:20px; font-weight:800;
+}
+.start-sub {
+  margin:4px 0 0; color:#6b7280; font-size:13px; text-align:center;
+}
+
+/* Compact fields on start */
+.start-fields {
+  width:100%; max-width:420px; display:flex; flex-direction:column; gap:12px; margin-top:8px;
+}
+.field {
+  display:flex; align-items:center; justify-content:space-between; gap:12px; background:#f7f9fd;
+  border:1px solid #e5e7eb; border-radius:12px; padding:10px 12px;
+}
+.field label { margin:0; font-size:13px; color:#475569; }
+.field input[type="text"], .field input[type="number"], .field input[type="tel"] {
+  max-width:120px; text-align:center; background:#fff;
+}
+
+/* Segmented control (Home/Away) */
+.segmented {
+  display:inline-flex; border:1px solid #d1d5db; border-radius:999px; overflow:hidden; background:#fff;
+}
+.segmented input { display:none; }
+.segmented label {
+  padding:8px 16px; cursor:pointer; font-weight:700; font-size:14px; color:#334155; user-select:none;
+}
+.segmented input:checked + label {
+  background:var(--brand); color:#fff;
+}
+
+/* Haptics switch style */
+.switch {
+  position:relative; width:46px; height:26px; background:#e5e7eb; border-radius:999px; transition:.2s;
+  flex:0 0 auto;
+}
+.switch::after {
+  content:""; position:absolute; top:3px; left:3px; width:20px; height:20px; background:#fff; border-radius:50%; transition:.2s; box-shadow:0 1px 2px rgba(0,0,0,.2);
+}
+input#haptics { display:none; }
+input#haptics:checked + .switch { background:var(--brand2); }
+input#haptics:checked + .switch::after { transform:translateX(20px); }
+
+/* Start button spacing + version */
+.start-actions { width:100%; max-width:420px; margin-top:4px; }
+.start-version { position:absolute; right:12px; bottom:8px; color:#9ca3af; font-size:11px; user-select:none; }
+
 </style>
 </head>
 <body>
@@ -109,30 +161,56 @@
   </div>
 
   <!-- START SCREEN -->
-  <div id="startCard" class="card" style="position:relative;padding-bottom:36px">
-    <div class="logo-wrap">
-      <img src="Hounds Logo - no back.avif" alt="Team Logo" class="logo" onerror="this.style.display='none'"/>
-    </div>
-    <div class="row" style="align-items:flex-end">
-      <div class="col" style="max-width:160px">
-        <label>Period length (minutes)</label>
-        <input id="periodLen" inputmode="numeric" pattern="[0-9]*" placeholder="e.g. 15" value="15"/>
-      </div>
-      <div class="col" style="max-width:220px">
-        <label>Team in Goal for Period 1</label>
-        <select id="initialTeam">
-          <option>Home</option>
-          <option>Away</option>
-        </select>
-      </div>
-    </div>
-    <div class="row" style="align-items:center;gap:6px;font-size:14px;margin-top:8px">
-      <input id="haptics" type="checkbox" style="margin:0"/>
-      <label for="haptics" style="cursor:pointer;margin:0">Haptics (Android users only)</label>
-    </div>
-    <button id="btnStartGame" class="btn btn-primary" style="width:100%;margin-top:12px">Start Game</button>
-    <div id="version" style="position:absolute;right:12px;bottom:8px;color:#9ca3af;font-size:11px;user-select:none"></div>
+ <!-- START SCREEN (polished) -->
+<div id="startCard" class="card" style="position:relative;padding-bottom:36px">
+  <div class="logo-wrap">
+    <img src="Hounds Logo - no back.avif" alt="Team Logo" class="logo" onerror="this.style.display='none'"/>
   </div>
+
+  <div class="start-wrap">
+    <h2 class="start-title">Shots-On-Goal Tracker</h2>
+    <p class="start-sub">Set your period length and which team is in your goal to begin.</p>
+
+    <div class="start-fields">
+      <!-- Period length -->
+      <div class="field">
+        <label for="periodLen">Period length (minutes)</label>
+        <input id="periodLen" inputmode="numeric" pattern="[0-9]*" placeholder="15" value="15"/>
+      </div>
+
+      <!-- Team selection (segmented) -->
+      <div class="field" style="justify-content:space-between">
+        <label>Team in Goal for Period 1</label>
+        <div class="segmented">
+          <input type="radio" id="teamHome" name="initialTeamRadio" value="Home" checked>
+          <label for="teamHome">Home</label>
+          <input type="radio" id="teamAway" name="initialTeamRadio" value="Away">
+          <label for="teamAway">Away</label>
+        </div>
+      </div>
+
+      <!-- Haptics switch -->
+      <div class="field" style="justify-content:space-between">
+        <label for="haptics">Haptics (Android users only)</label>
+        <input id="haptics" type="checkbox"/>
+        <span class="switch" aria-hidden="true"></span>
+      </div>
+    </div>
+
+    <div class="start-actions">
+      <button id="btnStartGame" class="btn btn-primary" style="width:100%">Start Game</button>
+    </div>
+  </div>
+
+  <!-- Keep the original hidden select for compatibility with existing JS -->
+  <select id="initialTeam" class="hidden">
+    <option selected>Home</option>
+    <option>Away</option>
+  </select>
+
+  <div id="version" class="start-version"></div>
+</div>
+
 
   <!-- APP MAIN (hidden until Start Game) -->
   <div id="appMain" class="hidden">
@@ -263,7 +341,7 @@
 <script>
 /* ---------- Version auto-increment (keep if you want auto) ---------- */
 (function(){
-  const SEMVER_BASE="v2.5.6";
+  const SEMVER_BASE="v2.5.7";
   function hashString(str){let h=5381;for(let i=0;i<str.length;i++)h=((h<<5)+h)+str.charCodeAt(i);return(h>>>0).toString(36);}
   var CURRENT_SCRIPT=document.currentScript;
   if(!CURRENT_SCRIPT){const scripts=Array.from(document.scripts).filter(s=>s.src==="");CURRENT_SCRIPT=scripts[scripts.length-1]||null;}
@@ -302,6 +380,23 @@ const $btnPeriodOrEnd=el('btnPeriodOrEnd'),$btnUndo=el('btnUndo'),$btnReset=el('
 const $tallyBody=el('tallyBody'),$noDataRow=el('noDataRow');
 const $helpBackdrop=el('helpBackdrop'),$helpClose=el('helpClose'),$helpCloseX=el('helpCloseX'),$btnHelp=el('btnHelp');
 const $stShots=el('currShots'),$stGoals=el('currGoals');
+
+// Sync segmented radio -> hidden #initialTeam select (keeps existing logic intact)
+(function syncInitialTeam(){
+  const select = document.getElementById('initialTeam');
+  const radios = Array.from(document.querySelectorAll('input[name="initialTeamRadio"]'));
+  if (!select || radios.length === 0) return;
+
+  // Initialize radios from current select value
+  const current = (select.value || 'Home');
+  const match = radios.find(r => r.value === current);
+  if (match) match.checked = true;
+
+  // Keep select in sync when user taps a segment
+  radios.forEach(r => r.addEventListener('change', () => {
+    if (r.checked) select.value = r.value;
+  }));
+})();
 
 /* ---------- Haptics ---------- */
 function vibrate(kind){if(!haptics) return; try{if(!('vibrate'in navigator))return;if(kind==='save')navigator.vibrate(12);else navigator.vibrate([35,25,35]);}catch(e){}}
