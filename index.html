@@ -205,6 +205,14 @@
 <button id="btnShowRaw" class="btn btn-ghost hidden" style="width:100%;margin-bottom:8px">
   Show raw data
 </button>
+      <hr style="border:none;border-top:1px solid #eef2f7;margin:12px 0">
+
+<div id="endResetArea" class="hidden">
+  <button id="btnResetEnd" class="btn btn-ghost" style="width:100%">
+    Reset Game
+  </button>
+</div>
+
 
 <div id="rawDataArea" class="hidden">
   <label style="display:block;margin-bottom:6px;color:#6b7280;font-size:13px">
@@ -255,7 +263,7 @@
 <script>
 /* ---------- Version auto-increment (keep if you want auto) ---------- */
 (function(){
-  const SEMVER_BASE="v2.3.4";
+  const SEMVER_BASE="v2.4.4";
   function hashString(str){let h=5381;for(let i=0;i<str.length;i++)h=((h<<5)+h)+str.charCodeAt(i);return(h>>>0).toString(36);}
   var CURRENT_SCRIPT=document.currentScript;
   if(!CURRENT_SCRIPT){const scripts=Array.from(document.scripts).filter(s=>s.src==="");CURRENT_SCRIPT=scripts[scripts.length-1]||null;}
@@ -505,6 +513,10 @@ function endGame(){
   // reveal the 'Show raw data' button in end state
 const btnShowRaw = document.getElementById('btnShowRaw');
 if (btnShowRaw) btnShowRaw.classList.remove('hidden');
+  // Show Reset option in end screen
+const resetArea = document.getElementById('endResetArea');
+if (resetArea) resetArea.classList.remove('hidden');
+
 
 }
 
@@ -565,6 +577,8 @@ $btnReset.addEventListener('click', resetAll);
 $periodLen.addEventListener('input',(e)=>{const v=e.target.value;if(!/^\d*$/.test(v)) e.target.value=v.replace(/\D+/g,'');});
 document.getElementById('btnShowRaw').addEventListener('click', toggleRawData);
 document.getElementById('btnCopyRaw').addEventListener('click', copyRawData);
+document.getElementById('btnResetEnd').addEventListener('click', resetAll);
+
 
 /* ---------- Initial render ---------- */
 renderStatus(); renderTally(); updateControls();
