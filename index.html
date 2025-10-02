@@ -399,12 +399,22 @@ function buildRawShotsString(){
   return shots.map(s => (s.result === 'Goal' ? 'X' : '/')).join(',');
 }
 
-function showRawData(){
+function toggleRawData(){
   const area = document.getElementById('rawDataArea');
-  const out  = document.getElementById('rawOutput');
-  out.value = buildRawShotsString();
-  area.classList.remove('hidden');
+  const btn  = document.getElementById('btnShowRaw');
+
+  if(area.classList.contains('hidden')){
+    // Show it
+    document.getElementById('rawOutput').value = buildRawShotsString();
+    area.classList.remove('hidden');
+    btn.textContent = 'Hide raw data';
+  } else {
+    // Hide it
+    area.classList.add('hidden');
+    btn.textContent = 'Show raw data';
+  }
 }
+
 
 async function copyRawData(){
   const out = document.getElementById('rawOutput');
@@ -553,7 +563,7 @@ $btnPeriodOrEnd.addEventListener('click', ()=> (period<3 ? nextPeriod() : endGam
 $btnUndo.addEventListener('click', undo);
 $btnReset.addEventListener('click', resetAll);
 $periodLen.addEventListener('input',(e)=>{const v=e.target.value;if(!/^\d*$/.test(v)) e.target.value=v.replace(/\D+/g,'');});
-document.getElementById('btnShowRaw').addEventListener('click', showRawData);
+document.getElementById('btnShowRaw').addEventListener('click', toggleRawData);
 document.getElementById('btnCopyRaw').addEventListener('click', copyRawData);
 
 /* ---------- Initial render ---------- */
