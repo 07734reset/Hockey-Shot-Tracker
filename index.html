@@ -771,12 +771,6 @@
       const $stShots = el("currShots"),
         $stGoals = el("currGoals");
 
-        // On blur, normalize to a clean MM:SS if not empty
-        node.addEventListener("blur", function () {
-          if (!node.value) return;
-          node.value = formatFromDigits(node.value);
-        });
-      })();
       // Sync segmented radio -> hidden #initialTeam select (keeps existing logic intact)
       (function syncInitialTeam() {
         const select = document.getElementById("initialTeam");
