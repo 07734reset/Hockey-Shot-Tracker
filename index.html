@@ -36,6 +36,8 @@
   .btn-ghost{background:#eef2f7}
   .btn-hl{background:var(--hl);color:#111}
   #btnSave,#btnGoal{min-height:120px;font-size:22px}
+  /* Disable double-tap zoom-ish gestures on action buttons */
+  #btnSave, #btnGoal { touch-action: manipulation; }
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
   .row-split{display:flex;gap:12px}
@@ -236,7 +238,7 @@
 <script>
 /* ---------- Version auto-increment (keep if you want auto) ---------- */
 (function(){
-  const SEMVER_BASE="v2.1.2";
+  const SEMVER_BASE="v2.1.3";
   function hashString(str){let h=5381;for(let i=0;i<str.length;i++)h=((h<<5)+h)+str.charCodeAt(i);return(h>>>0).toString(36);}
   var CURRENT_SCRIPT=document.currentScript;
   if(!CURRENT_SCRIPT){const scripts=Array.from(document.scripts).filter(s=>s.src==="");CURRENT_SCRIPT=scripts[scripts.length-1]||null;}
@@ -495,7 +497,7 @@ if ('serviceWorker' in navigator) {
   });
 }
 </script>
-<script>
+<!--<script>
 // Prevent double-tap zoom on buttons (iOS Safari)
 document.addEventListener('touchend', function (e) {
   const now = new Date().getTime();
@@ -506,6 +508,42 @@ document.addEventListener('touchend', function (e) {
     window.lastTouchEnd = now;
   }
 }, { passive: false });
+</script>
+-->
+<script>
+// Harden against iOS double-tap zoom on the big buttons
+(function(){
+  const btns = [document.getElementById('btnSave'), document.getElementById('btnGoal')];
+  let last = { t: 0, x: 0, y: 0, el: null };
+  const MS = 350;          // time window for "double tap"
+  const PX = 24;           // movement tolerance
+
+  function onTouchEnd(e){
+    if (!e.changedTouches || !e.changedTouches[0]) return;
+    const touch = e.changedTouches[0];
+    const now = performance.now();
+    const dx = Math.abs(touch.clientX - last.x);
+    const dy = Math.abs(touch.clientY - last.y);
+    const sameEl = last.el === e.currentTarget;
+    const quick = (now - last.t) < MS;
+    const close = (dx < PX && dy < PX);
+
+    // If this looks like a double tap on the same button, block it (prevents zoom)
+    if (sameEl && quick && close) {
+      e.preventDefault();   // <- crucial to stop iOS double-tap zoom
+      return;
+    }
+    last = { t: now, x: touch.clientX, y: touch.clientY, el: e.currentTarget };
+  }
+
+  function onDblClick(e){ e.preventDefault(); } // belt & braces
+
+  btns.forEach(b=>{
+    if(!b) return;
+    b.addEventListener('touchend', onTouchEnd, { passive: false });
+    b.addEventListener('dblclick', onDblClick);
+  });
+})();
 </script>
 
 </body>
