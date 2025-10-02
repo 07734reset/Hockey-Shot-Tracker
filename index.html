@@ -341,7 +341,7 @@ input#haptics:checked + .switch::after { transform:translateX(20px); }
 <script>
 /* ---------- Version auto-increment (keep if you want auto) ---------- */
 (function(){
-  const SEMVER_BASE="v2.6.10";
+  const SEMVER_BASE="v2.6.11";
   function hashString(str){let h=5381;for(let i=0;i<str.length;i++)h=((h<<5)+h)+str.charCodeAt(i);return(h>>>0).toString(36);}
   var CURRENT_SCRIPT=document.currentScript;
   if(!CURRENT_SCRIPT){const scripts=Array.from(document.scripts).filter(s=>s.src==="");CURRENT_SCRIPT=scripts[scripts.length-1]||null;}
@@ -382,29 +382,38 @@ const $helpBackdrop=el('helpBackdrop'),$helpClose=el('helpClose'),$helpCloseX=el
 const $stShots=el('currShots'),$stGoals=el('currGoals');
 // Auto-format game clock input as MM:SS while typing
 const switchClock = document.getElementById('switchClock');
+// Auto-format game clock input as MM:SS with zero-padding
+const switchClock = document.getElementById('switchClock');
 if (switchClock) {
   switchClock.addEventListener('input', () => {
-    // keep only digits
+    // remove all non-digits
     let digits = switchClock.value.replace(/\D/g, '');
     if (digits.length > 4) digits = digits.slice(0, 4);
 
-    let mm = '';
-    let ss = '';
+    // default minutes/seconds
+    let mm = 0, ss = 0;
 
+    if (digits.length === 0) {
+      switchClock.value = '';
+      return;
+    }
     if (digits.length <= 2) {
-      mm = digits;
+      // Interpret as minutes only
+      mm = parseInt(digits, 10) || 0;
     } else {
-      mm = digits.slice(0, -2);
-      ss = digits.slice(-2);
+      // Last two digits = seconds
+      mm = parseInt(digits.slice(0, -2), 10) || 0;
+      ss = parseInt(digits.slice(-2), 10) || 0;
+      if (ss > 59) ss = 59; // clamp to valid seconds
     }
 
-    if (mm.length > 0) {
-      switchClock.value = ss.length > 0 ? `${mm}:${ss}` : `${mm}:`;
-    } else {
-      switchClock.value = ss;
-    }
+    // Always show as MM:SS with padding
+    const mmStr = String(mm).padStart(2, '0');
+    const ssStr = String(ss).padStart(2, '0');
+    switchClock.value = `${mmStr}:${ssStr}`;
   });
 }
+
 
 
 // Sync segmented radio -> hidden #initialTeam select (keeps existing logic intact)
