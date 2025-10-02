@@ -242,7 +242,7 @@ input#haptics:checked + .switch::after { transform:translateX(20px); }
           </div>
           <div class="col">
             <label>Game Clock Time (MM:SS)</label>
-            <input id="switchClock" placeholder="14:23" inputmode="numeric" pattern="[0-9:]*" type="tel"/>
+            <input id="switchClock" placeholder="10:23" inputmode="numeric" pattern="[0-9:]*" type="tel"/>
           </div>
         </div>
         <button id="btnConfirmSwitch" class="btn btn-primary" style="width:100%;margin-top:12px" disabled>Confirm Switch</button>
@@ -341,7 +341,7 @@ input#haptics:checked + .switch::after { transform:translateX(20px); }
 <script>
 /* ---------- Version auto-increment (keep if you want auto) ---------- */
 (function(){
-  const SEMVER_BASE="v2.6.9";
+  const SEMVER_BASE="v2.6.10";
   function hashString(str){let h=5381;for(let i=0;i<str.length;i++)h=((h<<5)+h)+str.charCodeAt(i);return(h>>>0).toString(36);}
   var CURRENT_SCRIPT=document.currentScript;
   if(!CURRENT_SCRIPT){const scripts=Array.from(document.scripts).filter(s=>s.src==="");CURRENT_SCRIPT=scripts[scripts.length-1]||null;}
@@ -380,6 +380,32 @@ const $btnPeriodOrEnd=el('btnPeriodOrEnd'),$btnUndo=el('btnUndo'),$btnReset=el('
 const $tallyBody=el('tallyBody'),$noDataRow=el('noDataRow');
 const $helpBackdrop=el('helpBackdrop'),$helpClose=el('helpClose'),$helpCloseX=el('helpCloseX'),$btnHelp=el('btnHelp');
 const $stShots=el('currShots'),$stGoals=el('currGoals');
+// Auto-format game clock input as MM:SS while typing
+const switchClock = document.getElementById('switchClock');
+if (switchClock) {
+  switchClock.addEventListener('input', () => {
+    // keep only digits
+    let digits = switchClock.value.replace(/\D/g, '');
+    if (digits.length > 4) digits = digits.slice(0, 4);
+
+    let mm = '';
+    let ss = '';
+
+    if (digits.length <= 2) {
+      mm = digits;
+    } else {
+      mm = digits.slice(0, -2);
+      ss = digits.slice(-2);
+    }
+
+    if (mm.length > 0) {
+      switchClock.value = ss.length > 0 ? `${mm}:${ss}` : `${mm}:`;
+    } else {
+      switchClock.value = ss;
+    }
+  });
+}
+
 
 // Sync segmented radio -> hidden #initialTeam select (keeps existing logic intact)
 (function syncInitialTeam(){
