@@ -200,6 +200,23 @@
           </tbody>
         </table>
       </div>
+      <hr style="border:none;border-top:1px solid #eef2f7;margin:12px 0">
+
+<button id="btnShowRaw" class="btn btn-ghost hidden" style="width:100%;margin-bottom:8px">
+  Show raw data
+</button>
+
+<div id="rawDataArea" class="hidden">
+  <label style="display:block;margin-bottom:6px;color:#6b7280;font-size:13px">
+    Copyable shots string (Save = “/”, Goal = “X”)
+  </label>
+  <textarea id="rawOutput" readonly
+            style="width:100%;min-height:90px;border:1px solid #d1d5db;border-radius:10px;padding:10px;font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace; font-size:14px;"></textarea>
+  <div class="row" style="margin-top:8px;justify-content:flex-end">
+    <button id="btnCopyRaw" class="btn btn-secondary">Copy</button>
+  </div>
+</div>
+
     </div>
   </div>
 </div>
@@ -238,7 +255,7 @@
 <script>
 /* ---------- Version auto-increment (keep if you want auto) ---------- */
 (function(){
-  const SEMVER_BASE="v2.1.4";
+  const SEMVER_BASE="v2.2.4";
   function hashString(str){let h=5381;for(let i=0;i<str.length;i++)h=((h<<5)+h)+str.charCodeAt(i);return(h>>>0).toString(36);}
   var CURRENT_SCRIPT=document.currentScript;
   if(!CURRENT_SCRIPT){const scripts=Array.from(document.scripts).filter(s=>s.src==="");CURRENT_SCRIPT=scripts[scripts.length-1]||null;}
@@ -377,6 +394,32 @@ function showGameTallyOnly(){
 function seedGoalieIfNeeded(goalie,t){if(!goalie)return;const g=String(goalie);if(seeded.some(x=>x.goalie===g&&x.team===t))return;seeded.push({team:t,goalie:g});}
 function goalieHasData(t,g){const n=String(g);return shots.some(x=>x.team===t&&String(x.goalie)===n)||shifts.some(x=>x.team===t&&String(x.goalie)===n);}
 function unseedIfOrphan(t,g){const n=String(g);const i=seeded.findIndex(x=>x.team===t&&String(x.goalie)===n);if(i!==-1&&!goalieHasData(t,n)){seeded.splice(i,1);}}
+function buildRawShotsString(){
+  // Preserve original order; map Save -> "/" and Goal -> "X"
+  return shots.map(s => (s.result === 'Goal' ? 'X' : '/')).join(',');
+}
+
+function showRawData(){
+  const area = document.getElementById('rawDataArea');
+  const out  = document.getElementById('rawOutput');
+  out.value = buildRawShotsString();
+  area.classList.remove('hidden');
+}
+
+async function copyRawData(){
+  const out = document.getElementById('rawOutput');
+  try{
+    await navigator.clipboard.writeText(out.value);
+    // tiny visual feedback
+    const btn = document.getElementById('btnCopyRaw');
+    const old = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(()=>btn.textContent = old, 900);
+  }catch(e){
+    // Fallback select for manual copy
+    out.focus(); out.select();
+  }
+}
 
 /* ---------- Core actions ---------- */
 function startGame(){
@@ -449,6 +492,10 @@ function endGame(){
   $btnUndo.disabled=true;
   // 👇 hide everything except the Game Tally
   showGameTallyOnly();
+  // reveal the 'Show raw data' button in end state
+const btnShowRaw = document.getElementById('btnShowRaw');
+if (btnShowRaw) btnShowRaw.classList.remove('hidden');
+
 }
 
 /* ---------- Undo & Reset ---------- */
@@ -506,6 +553,8 @@ $btnPeriodOrEnd.addEventListener('click', ()=> (period<3 ? nextPeriod() : endGam
 $btnUndo.addEventListener('click', undo);
 $btnReset.addEventListener('click', resetAll);
 $periodLen.addEventListener('input',(e)=>{const v=e.target.value;if(!/^\d*$/.test(v)) e.target.value=v.replace(/\D+/g,'');});
+document.getElementById('btnShowRaw').addEventListener('click', showRawData);
+document.getElementById('btnCopyRaw').addEventListener('click', copyRawData);
 
 /* ---------- Initial render ---------- */
 renderStatus(); renderTally(); updateControls();
