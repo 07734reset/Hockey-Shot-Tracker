@@ -218,7 +218,7 @@ input#haptics:checked + .switch::after { transform:translateX(20px); }
     <div id="periodSetup" class="card hidden">
       <div>
         <label>Goalie # Starting Period</label>
-        <input id="startGoalie" placeholder="e.g. 31"/>
+        <input id="startGoalie" placeholder="e.g. 31" inputmode="numeric" pattern="[0-9]*" type="tel"/>
       </div>
       <button id="btnStartPeriod" class="btn btn-secondary" style="width:100%;margin-top:12px">Start Period</button>
     </div>
@@ -238,11 +238,11 @@ input#haptics:checked + .switch::after { transform:translateX(20px); }
         <div class="row">
           <div class="col">
             <label>New goalie #</label>
-            <input id="newGoalie"/>
+            <input id="newGoalie" inputmode="numeric" pattern="[0-9]*" type="tel"/>
           </div>
           <div class="col">
             <label>Game Clock Time (MM:SS)</label>
-            <input id="switchClock" placeholder="14:23"/>
+            <input id="switchClock" placeholder="14:23" inputmode="numeric" pattern="[0-9]*" type="tel"/>
           </div>
         </div>
         <button id="btnConfirmSwitch" class="btn btn-primary" style="width:100%;margin-top:12px" disabled>Confirm Switch</button>
@@ -341,7 +341,7 @@ input#haptics:checked + .switch::after { transform:translateX(20px); }
 <script>
 /* ---------- Version auto-increment (keep if you want auto) ---------- */
 (function(){
-  const SEMVER_BASE="v2.5.8";
+  const SEMVER_BASE="v2.6.8";
   function hashString(str){let h=5381;for(let i=0;i<str.length;i++)h=((h<<5)+h)+str.charCodeAt(i);return(h>>>0).toString(36);}
   var CURRENT_SCRIPT=document.currentScript;
   if(!CURRENT_SCRIPT){const scripts=Array.from(document.scripts).filter(s=>s.src==="");CURRENT_SCRIPT=scripts[scripts.length-1]||null;}
