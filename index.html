@@ -168,7 +168,7 @@ input#haptics:checked + .switch::after { transform:translateX(20px); }
   </div>
 
   <div class="start-wrap">
-    <h2 class="start-title">Shots-On-Goal Tracker</h2>
+  <!-- <h2 class="start-title">Shots-On-Goal Tracker</h2> -->
     <p class="start-sub">Set your period length and which team is in your goal to begin.</p>
 
     <div class="start-fields">
@@ -341,7 +341,7 @@ input#haptics:checked + .switch::after { transform:translateX(20px); }
 <script>
 /* ---------- Version auto-increment (keep if you want auto) ---------- */
 (function(){
-  const SEMVER_BASE="v2.5.7";
+  const SEMVER_BASE="v2.5.8";
   function hashString(str){let h=5381;for(let i=0;i<str.length;i++)h=((h<<5)+h)+str.charCodeAt(i);return(h>>>0).toString(36);}
   var CURRENT_SCRIPT=document.currentScript;
   if(!CURRENT_SCRIPT){const scripts=Array.from(document.scripts).filter(s=>s.src==="");CURRENT_SCRIPT=scripts[scripts.length-1]||null;}
